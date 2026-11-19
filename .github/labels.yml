@@ -1,0 +1,23 @@
+# The labels of this repository only (devops-cli `devops roadmap onboard`, docs/roadmap/onboard.md).
+# The workflow labels (type/*, status/*, priority/*, value/*, effort/*, owner/*, verdict/*) come from
+# devops-cli. Intake gives an issue the scope/* label of its Conventional Commit scope.
+
+- name: "scope/image"
+  color: "5319E7"
+  description: "The Dockerfile, the image layers and the tool test"
+
+- name: "scope/ci"
+  color: "1D76DB"
+  description: "GitHub Actions workflows: build, scan, push and publish"
+
+- name: "scope/deps"
+  color: "0366D6"
+  description: "Tool versions: mise.toml, mise.lock, the npm and uv locks, and Renovate"
+
+- name: "scope/security"
+  color: "B60205"
+  description: "Scanner findings, ignore entries and the security policy of the image"
+
+- name: "scope/docs"
+  color: "0075CA"
+  description: "README and other documents"
