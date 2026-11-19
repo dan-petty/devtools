@@ -6,7 +6,7 @@ Debian sid container image with the development tools of devops-cli: the tools o
 ghcr.io/dan-petty/devtools
 ```
 
-The image is for `linux/amd64` only. It has no login user.
+The image is for `linux/amd64` and `linux/arm64`: one manifest list holds the two platforms, and Docker pulls the image of your platform. It has no login user.
 
 ## Use the image
 
@@ -29,6 +29,17 @@ Each published image has a build provenance attestation. To verify it:
 gh attestation verify oci://ghcr.io/dan-petty/devtools:latest --owner dan-petty
 ```
 
+## Platforms
+
+Each platform builds natively on a GitHub-hosted runner of its own architecture (`ubuntu-24.04` and `ubuntu-24.04-arm`), with no emulation. The `Dockerfile` has no code for one platform.
+
+Tools with no `linux/arm64` build: none (2026-11-19). If a tool has no build for a platform, write its name here. The build of that platform then fails, because the image never skips a tool:
+
+- `mise install --locked` refuses a tool that has no URL for the platform in `mise.lock`.
+- `uv pip sync` with `UV_NO_BUILD=1` refuses to build a Python package from source when it has no wheel for the platform.
+- The build runs `claude --version`, because the install script of Claude Code does not fail when the native package is missing.
+- The test step runs each tool once on each platform.
+
 ## Tool sources
 
 Each tool comes from one source. No version of a tool is copied into code: a version is only in the standard file of its source, and Renovate updates that file with a built-in manager.
@@ -45,14 +56,14 @@ The rule for apt: **use apt only where sid is current.** If sid does not have a 
 
 Podman takes the place of Docker. The image has no Docker engine.
 
-`mise.lock` holds the download URL and the sha256 checksum of each mise tool for `linux-x64`. The build runs `mise install --locked`, which refuses a tool that has no locked URL. The mise image and the uv image come into the build with `COPY --from` at a pinned digest. The build does not put mise in the image.
+`mise.lock` holds the download URL and the sha256 checksum of each mise tool for `linux-x64` and `linux-arm64`. The build runs `mise install --locked`, which refuses a tool that has no locked URL. The mise image and the uv image come into the build with `COPY --from` at a pinned digest. The build does not put mise in the image.
 
-Each Python tool has a virtual environment of its own in `/usr/local/lib/devtools`. `uv pip sync --require-hashes` refuses a distribution that the lock file does not name with its hash. The Node tools are in `/usr/local/lib/devtools/npm`. `npm ci --ignore-scripts` checks the sha512 of each package and runs no install script. The `claude` command is the native binary of the Claude Code platform package, because the install script that copies it is not run.
+Each Python tool has a virtual environment of its own in `/usr/local/lib/devtools`. `uv pip sync --require-hashes` refuses a distribution that the lock file does not name with its hash. The lock files of `python/` are universal: they hold the hash of the wheel of each platform. The Node tools are in `/usr/local/lib/devtools/npm`. `npm ci --ignore-scripts` checks the sha512 of each package and runs no install script. npm installs only the native package of the build platform from the optional dependencies of a package. Then `npm rebuild` runs one install script, that of Claude Code, which `allowScripts` in `npm/package.json` approves. The script links the native binary of the platform in place of the placeholder of the `claude` command.
 
 ## Change a tool
 
 - **apt**: add the package to the apt step of the `Dockerfile` only if sid has a current version.
-- **mise**: run `mise use <tool>@<version>`, then `mise lock --platform linux-x64`. Add the command name to the copy loop of the `Dockerfile`.
+- **mise**: run `mise use <tool>@<version>`, then `mise lock --platform linux-x64,linux-arm64`. Add the command name to the copy loop of the `Dockerfile`.
 - **Python**: write `python/<tool>.in` with `<tool>==<version>`. In `python/`, run `uv pip compile --universal --generate-hashes --python-version=3.14 <tool>.in --output-file=<tool>.txt`. Add the tool to the loop of the `python-tools` stage and its command to the links of the last stage.
 - **npm**: in `npm/`, run `npm install --package-lock-only --ignore-scripts <package>@<version>` with `HOME` set to an empty folder, so that your `~/.npmrc` cannot change the registry URLs of the lock file. Add the command to the links of the last stage.
 
@@ -60,8 +71,10 @@ Then add the command to `test/tools.sh`.
 
 ## Build and test
 
+The build makes the image of the platform of your host:
+
 ```sh
-docker buildx build --platform linux/amd64 --tag devtools:test --load .
+docker buildx build --tag devtools:test --load .
 docker run --rm --network none -v "$PWD/test:/test:ro" devtools:test bash /test/tools.sh
 docker buildx build --builder default --build-arg DEVTOOLS=devtools:test --file test/copy-probe.Dockerfile test
 ```
@@ -72,12 +85,19 @@ mise reads the GitHub API. To raise its rate limit, give the build a token: `--s
 
 The workflow [`image.yml`](.github/workflows/image.yml) runs for each pull request, for each push to `main`, each day at 04:17 UTC, and on demand.
 
+A job for each platform, on a runner of that architecture:
+
 1. Build the image and load it into Docker. The daily build uses `--pull --no-cache`.
 2. Run `test/tools.sh`, which starts each tool once with no network.
 3. Build `test/copy-probe.Dockerfile`, which copies `gh` into `python:3.14-slim-trixie` and runs it.
-4. Scan the image with Trivy. The SARIF goes to code scanning, and the job summary names the detected OS and the finding counts. A HIGH or CRITICAL finding that has a fix fails the job.
-5. Scan the npm and Python lock files with osv-scanner.
-6. On `main` only: push the image by digest with SBOM and provenance attestations, attest the build provenance, then tag the digest `latest` and `YYYYMMDD`.
+4. Scan the npm and Python lock files with osv-scanner.
+5. Scan the image with Trivy. The SARIF goes to code scanning in the category `trivy-image-amd64` or `trivy-image-arm64`, and the job summary names the image size, the detected OS and the finding counts. A HIGH or CRITICAL finding that has a fix fails the job.
+6. On `main` only: push the image by digest with SBOM and provenance attestations.
+
+On `main`, when the two platform jobs pass, the publish job:
+
+1. Makes one manifest list of the two digests with `docker buildx imagetools create`, and tags it `latest` and `YYYYMMDD`.
+2. Attests the build provenance of the manifest list.
 
 Trivy finds no OS package findings on Debian sid, because sid has no security tracker data. The gate covers the binaries and the language packages. The owner approved this gap on 2026-11-19.
 
