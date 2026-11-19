@@ -138,6 +138,23 @@ url = "https://github.com/kjanat/actionlint/releases/download/v1.17.1/actionlint
 url_api = "https://api.github.com/repos/kjanat/actionlint/releases/assets/727138046"
 provenance = "github-attestations"
 
+[[tools."github:open-telemetry/weaver"]]
+version = "0.28.0"
+backend = "github:open-telemetry/weaver"
+specifiers = ["0.28.0"]
+
+[tools."github:open-telemetry/weaver"."platforms.linux-arm64"]
+checksum = "sha256:dab3251667c64e7bf5e20f294667a5ac9c041ee21212f8390e6affe70c487ddc"
+url = "https://github.com/open-telemetry/weaver/releases/download/v0.28.0/weaver-aarch64-unknown-linux-gnu.tar.xz"
+url_api = "https://api.github.com/repos/open-telemetry/weaver/releases/assets/641116757"
+provenance = "github-attestations"
+
+[tools."github:open-telemetry/weaver"."platforms.linux-x64"]
+checksum = "sha256:9878e2d56ad82ae441b0b527377a4f6001ae19f4af362fb0a4d951884f59ab61"
+url = "https://github.com/open-telemetry/weaver/releases/download/v0.28.0/weaver-x86_64-unknown-linux-gnu.tar.xz"
+url_api = "https://api.github.com/repos/open-telemetry/weaver/releases/assets/641116864"
+provenance = "github-attestations"
+
 [[tools.gitleaks]]
 version = "8.30.1"
 backend = "aqua:gitleaks/gitleaks"

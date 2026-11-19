@@ -49,7 +49,7 @@ The rule for apt: **use apt only where sid is current.** If sid does not have a 
 | Source | Tools | Version file | Update |
 | --- | --- | --- | --- |
 | apt (Debian sid) | git, jq, shellcheck, curl, socat, bubblewrap, gnome-keyring, zsh, sudo, ping, tracepath, mtr, nc, tcpdump, traceroute, unzip, python3.14 (`python`), nodejs, npm, ansible-core, ansible-runner, bandit, podman, buildah, skopeo, crun, passt, uidmap, fuse-overlayfs, containers-storage | none: the packages float with sid | the daily rebuild |
-| mise | gh, kubectl, kustomize, helm, minikube, argo, argocd, kubectl-argo-rollouts, cloudflared, trivy, tofu, promtool, kube-linter, popeye, pluto, kubeconform, tflint, k9s, gitleaks, osv-scanner, golangci-lint, vale, actionlint, hadolint, gh-dash, tuicr | `mise.toml`, `mise.lock` | Renovate `mise` |
+| mise | gh, kubectl, kustomize, helm, minikube, argo, argocd, kubectl-argo-rollouts, cloudflared, trivy, tofu, promtool, kube-linter, popeye, pluto, kubeconform, tflint, k9s, gitleaks, osv-scanner, golangci-lint, vale, actionlint, hadolint, gh-dash, tuicr, weaver | `mise.toml`, `mise.lock` | Renovate `mise` |
 | uv image | uv, uvx | `Dockerfile` | Renovate `dockerfile` |
 | uv, hashed lock | semgrep, pre-commit | `python/<tool>.in`, `python/<tool>.txt` | Renovate `pip-compile` |
 | npm | openspec, devcontainer, style-dictionary, copilot, claude | `npm/package.json`, `npm/package-lock.json` | Renovate `npm` |

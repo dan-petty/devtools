@@ -14,6 +14,8 @@ gh = "2.105.0"
 # The maintained fork of actionlint, which knows the current runner labels. The registry
 # name `actionlint` is the upstream rhysd/actionlint, which has had no release since 1.7.12.
 "github:kjanat/actionlint" = "1.17.1"
+# OpenTelemetry Weaver, the CLI of the semantic conventions.
+"github:open-telemetry/weaver" = "0.28.0"
 gitleaks = "8.30.1"
 golangci-lint = "2.15.0"
 hadolint = "2.15.1"

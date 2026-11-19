@@ -29,7 +29,7 @@ RUN --mount=type=bind,from=mise,source=/usr/local/bin/mise,target=/usr/local/bin
     && mkdir -p /out/bin \
     && for command in actionlint argo argocd cloudflared gh gh-dash gitleaks golangci-lint \
          hadolint helm k9s kube-linter kubeconform kubectl kubectl-argo-rollouts kustomize \
-         minikube osv-scanner pluto popeye promtool tflint tofu trivy tuicr vale; do \
+         minikube osv-scanner pluto popeye promtool tflint tofu trivy tuicr vale weaver; do \
          install -m 0755 "$(mise which "$command")" "/out/bin/$command" || exit 1; \
        done \
     && rm -rf /tmp/mise

@@ -76,6 +76,7 @@ run tofu --version
 run trivy --version
 run tuicr --version
 run vale --version
+run weaver --version
 
 # uv and the Python tools
 run uv --version
