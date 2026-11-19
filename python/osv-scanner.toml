@@ -2,36 +2,41 @@
 # that no released version of the locked tool fixes. It has a reason, a tracking issue and an end
 # date: 3 days, renewed at most to 14 days in all (devops-cli SECURITY.md, "A Finding with No Fix").
 
-# semgrep 1.179.0 locks mcp 1.29.0. The newest semgrep, 1.186.0 (read on 2026-11-19), also
+# semgrep 1.186.0, the newest release (read on 2026-11-19), locks mcp 1.29.0, because it
 # requires mcp==1.29.0. Fixed in mcp 1.30.0. Tracked in #2.
 [[IgnoredVulns]]
 id = "GHSA-5h93-6whr-6q8j"
 effectiveUntil = 2026-11-22T00:00:00Z
-reason = "mcp 1.29.0, which semgrep 1.179.0 and 1.186.0 require; no semgrep release has the fix (#2)."
+reason = "mcp 1.29.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2)."
 
 [[IgnoredVulns]]
 id = "GHSA-84m7-p3x7-pcfv"
 effectiveUntil = 2026-11-22T00:00:00Z
-reason = "mcp 1.29.0, which semgrep 1.179.0 and 1.186.0 require; no semgrep release has the fix (#2)."
+reason = "mcp 1.29.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2)."
 
 [[IgnoredVulns]]
 id = "GHSA-rwrf-2pqf-9j8j"
 effectiveUntil = 2026-11-22T00:00:00Z
-reason = "mcp 1.29.0, which semgrep 1.179.0 and 1.186.0 require; no semgrep release has the fix (#2)."
+reason = "mcp 1.29.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2)."
 
 [[IgnoredVulns]]
 id = "GHSA-w4fh-qvv9-3v23"
 effectiveUntil = 2026-11-22T00:00:00Z
-reason = "mcp 1.29.0, which semgrep 1.179.0 and 1.186.0 require; no semgrep release has the fix (#2)."
+reason = "mcp 1.29.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2)."
 
-# semgrep 1.179.0 locks opentelemetry-api 1.37.0. The newest semgrep, 1.186.0, also requires
+[[IgnoredVulns]]
+id = "GHSA-qx49-fqc8-xw99"
+effectiveUntil = 2026-11-22T00:00:00Z
+reason = "mcp 1.29.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2). Published 2026-11-19."
+
+# semgrep 1.186.0 locks opentelemetry-api 1.37.0, because it requires
 # opentelemetry-api~=1.37.0. Fixed in 1.45.1 and 1.45.2. Tracked in #2.
 [[IgnoredVulns]]
 id = "GHSA-mf5v-w3w3-f6cg"
 effectiveUntil = 2026-11-22T00:00:00Z
-reason = "opentelemetry-api 1.37.0, which semgrep 1.179.0 and 1.186.0 require; no semgrep release has the fix (#2)."
+reason = "opentelemetry-api 1.37.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2)."
 
 [[IgnoredVulns]]
 id = "GHSA-xcq7-p3pf-p88h"
 effectiveUntil = 2026-11-22T00:00:00Z
-reason = "opentelemetry-api 1.37.0, which semgrep 1.179.0 and 1.186.0 require; no semgrep release has the fix (#2)."
+reason = "opentelemetry-api 1.37.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2)."
