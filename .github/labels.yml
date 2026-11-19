@@ -1,23 +1,28 @@
 # The labels of this repository only (devops-cli `devops roadmap onboard`, docs/roadmap/onboard.md).
-# The workflow labels (type/*, status/*, priority/*, value/*, effort/*, owner/*, verdict/*) come from
-# devops-cli. Intake gives an issue the scope/* label of its Conventional Commit scope.
+# The workflow labels come from devops-cli (src/devops_cli/roadmap/workflow_labels.py).
+# Intake gives an issue the scope/* label of its Conventional Commit scope. Each scope/* label is
+# gray (DCDCD6), as in devops-cli (docs/DESIGN.md: one color for each label family).
 
 - name: "scope/image"
-  color: "5319E7"
+  color: "DCDCD6"
   description: "The Dockerfile, the image layers and the tool test"
 
 - name: "scope/ci"
-  color: "1D76DB"
+  color: "DCDCD6"
   description: "GitHub Actions workflows: build, scan, push and publish"
 
 - name: "scope/deps"
-  color: "0366D6"
+  color: "DCDCD6"
   description: "Tool versions: mise.toml, mise.lock, the npm and uv locks, and Renovate"
 
+- name: "scope/infra"
+  color: "DCDCD6"
+  description: "Base images of the Dockerfile that Renovate updates"
+
 - name: "scope/security"
-  color: "B60205"
+  color: "DCDCD6"
   description: "Scanner findings, ignore entries and the security policy of the image"
 
 - name: "scope/docs"
-  color: "0075CA"
+  color: "DCDCD6"
   description: "README and other documents"
