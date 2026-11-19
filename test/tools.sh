@@ -69,7 +69,8 @@ vale --version
 uv --version
 uvx --version
 pre-commit --version
-semgrep --version
+# With no network, the version check of semgrep waits 98 s for its timeout.
+semgrep --disable-version-check --version
 
 # npm
 claude --version
