@@ -38,7 +38,7 @@ Tools with no `linux/arm64` build: none (2026-11-19). If a tool has no build for
 - `mise install --locked` refuses a tool that has no URL for the platform in `mise.lock`.
 - `uv pip sync` with `UV_NO_BUILD=1` refuses to build a Python package from source when it has no wheel for the platform.
 - The build runs `claude --version`, because the install script of Claude Code does not fail when the native package is missing.
-- The test step runs each tool once on each platform.
+- The tool test runs each tool once on each platform.
 
 ## Tool sources
 
@@ -69,7 +69,7 @@ The Node tools are in `/usr/local/lib/devtools/npm`. `npm ci --ignore-scripts` c
 - **Python**: write `python/<tool>.in` with `<tool>==<version>`. In `python/`, run `uv pip compile --universal --generate-hashes --python-version=3.14 <tool>.in --output-file=<tool>.txt`. Add the tool to the loop of the `python-tools` stage and its command to the links of the last stage.
 - **npm**: in `npm/`, run `npm install --package-lock-only --ignore-scripts <package>@<version>` with `HOME` set to an empty folder, so that your `~/.npmrc` cannot change the registry URLs of the lock file. Add the command to the links of the last stage.
 
-Then add the command to `test/tools.sh`.
+Then add `run <command> --version` to `test/tools.sh`.
 
 ## Build and test
 
@@ -77,9 +77,11 @@ The build makes the image of the platform of your host:
 
 ```sh
 docker buildx build --tag devtools:test --load .
-docker run --rm --network none -v "$PWD/test:/test:ro" devtools:test bash /test/tools.sh
+docker buildx build --builder default --no-cache --output type=cacheonly --build-arg DEVTOOLS=devtools:test --file test/tools.Dockerfile test
 docker buildx build --builder default --build-arg DEVTOOLS=devtools:test --file test/copy-probe.Dockerfile test
 ```
+
+`test/tools.Dockerfile` runs `test/tools.sh` in the image with no network. Each tool prints its version once, and each command has a timeout of 60 s.
 
 mise reads the GitHub API. To raise its rate limit, give the build a token: `--secret id=github_token,env=GITHUB_TOKEN`.
 
@@ -87,21 +89,25 @@ mise reads the GitHub API. To raise its rate limit, give the build a token: `--s
 
 The workflow [`image.yml`](.github/workflows/image.yml) runs for each pull request, for each push to `main`, each day at 04:17 UTC, and on demand.
 
-A job for each platform, on a runner of that architecture:
+The test job runs for each event, once for each platform, on a runner of that architecture. Its token cannot write packages.
 
-1. Build the image and load it into Docker. The daily build uses `--pull --no-cache`.
-2. Run `test/tools.sh`, which starts each tool once with no network.
+1. Build the image with the docker driver of the default builder. The image goes into the image store of Docker with no export. The daily build uses `--pull --no-cache`.
+2. Build `test/tools.Dockerfile`, which starts each tool once with no network.
 3. Build `test/copy-probe.Dockerfile`, which copies `gh` into `python:3.14-slim-trixie` and runs it.
-4. Scan the npm and Python lock files with osv-scanner.
-5. Scan the image with Trivy. The SARIF goes to code scanning in the category `trivy-image-amd64` or `trivy-image-arm64`, and the job summary names the image size, the detected OS and the finding counts. A HIGH or CRITICAL finding that has a fix fails the job.
-6. On `main` only: push the image by digest with SBOM and provenance attestations.
+4. Scan the npm and Python lock files with osv-scanner. A finding fails the job.
+5. Scan the image with Trivy. The SARIF goes to code scanning in the category `trivy-image-amd64` or `trivy-image-arm64`, and the job summary names the image size, the detected OS and the finding counts. The Trivy databases come from the cache that the newest run on `main` saved.
 
-On `main`, when the two platform jobs pass, the publish job:
+On `main`, when the two test jobs pass, the push job runs once for each platform, on a runner of that architecture:
+
+1. Build the image again with the docker-container driver, and push it by digest with SBOM and provenance attestations.
+2. Build `test/tools.Dockerfile` on the pushed digest.
+
+Then the publish job:
 
 1. Makes one manifest list of the two digests with `docker buildx imagetools create`, and tags it `latest` and `YYYYMMDD`.
 2. Attests the build provenance of the manifest list.
 
-Trivy finds no OS package findings on Debian sid, because sid has no security tracker data. The gate covers the binaries and the language packages. The owner approved this gap on 2026-11-19.
+The gate is on the lock files: osv-scanner fails the job on a finding in the npm and Python locks. The Trivy scan of the image is report-only (owner decision of 2026-11-19 in #1), because the Go binaries of upstream tools at their newest release hold HIGH and CRITICAL findings that no change here can fix. The daily rebuild and the Renovate updates close the alerts in code scanning. Trivy finds no OS package findings on Debian sid, because sid has no security tracker data. The owner approved this gap on 2026-11-19.
 
 An ignore of a finding that has no released fix has a reason, a tracking issue and an end date. `python/osv-scanner.toml` holds the ignores of the Python lock files.
 
