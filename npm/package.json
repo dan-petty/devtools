@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "description": "The Node tools of the devtools image. The image installs them with npm ci --ignore-scripts.",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.328",
+    "@devcontainers/cli": "0.90.0",
+    "@fission-ai/openspec": "2.1.0",
+    "@github/copilot": "1.0.114",
+    "style-dictionary": "5.8.0"
+  },
+  "overrides": {
+    "style-dictionary": {
+      "glob": "14.0.6",
+      "minimatch": "11.0.9"
+    }
+  }
+}

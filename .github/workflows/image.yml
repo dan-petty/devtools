@@ -1,0 +1,158 @@
+name: Image
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # The daily rebuild takes the updates of the sid packages.
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  image:
+    name: Build, test, scan and publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      # Push the image and its attestation to GHCR.
+      packages: write
+      # Sign the build provenance attestation.
+      id-token: write
+      attestations: write
+      # Upload the Trivy SARIF to code scanning.
+      security-events: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}
+      # Only main publishes. A pull request builds, tests and scans the image.
+      PUBLISH: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+      SCHEDULED: ${{ github.event_name == 'schedule' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value={{date 'YYYYMMDD'}},enable={{is_default_branch}}
+
+      # The build loads the image into Docker for the tests and the scans. The scheduled
+      # rebuild pulls the base images again and uses no cache.
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: devtools:test
+          labels: ${{ steps.meta.outputs.labels }}
+          pull: ${{ env.SCHEDULED }}
+          no-cache: ${{ env.SCHEDULED }}
+          secrets: github_token=${{ github.token }}
+
+      - name: Test the version of each tool
+        run: docker run --rm --network none -v "$PWD/test:/test:ro" devtools:test bash /test/tools.sh
+
+      # The Docker driver of the default builder reads the image that the build loaded.
+      - name: Test a COPY --from of one command into Debian trixie
+        run: >-
+          docker buildx build --builder default --build-arg DEVTOOLS=devtools:test
+          --file test/copy-probe.Dockerfile test
+
+      # python/osv-scanner.toml holds the ignores of the Python lock files.
+      - name: Scan the lock files with osv-scanner
+        run: >-
+          docker run --rm -v "$PWD:/src:ro" -w /src devtools:test
+          osv-scanner scan source
+          --lockfile npm/package-lock.json
+          --lockfile requirements.txt:python/pre-commit.txt
+          --lockfile requirements.txt:python/semgrep.txt
+
+      # The image scans itself with the Trivy of mise.lock. The first scan writes every finding
+      # to SARIF, and the job summary names the detected OS and the finding counts of each
+      # package type. Trivy finds no OS package findings on sid, so the gate covers the binaries
+      # and the language packages: a HIGH or CRITICAL finding that has a fix fails the job.
+      - name: Scan the image with Trivy
+        run: |
+          mkdir -p "$RUNNER_TEMP/trivy"
+          trivy() {
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v "$RUNNER_TEMP/trivy:/root/.cache/trivy" \
+              -v "$PWD:/src" -w /src \
+              devtools:test trivy "$@"
+          }
+          trivy image --scanners vuln --format json --output trivy.json devtools:test
+          trivy convert --format sarif --output trivy.sarif trivy.json
+          jq -r '
+            "Detected OS: \(.Metadata.OS.Family // "none") \(.Metadata.OS.Name // "")",
+            "OS package findings: \([.Results[] | select(.Class == "os-pkgs") | (.Vulnerabilities // [])[]] | length)",
+            "",
+            "| Type | Findings | By severity | HIGH or CRITICAL with a fix |",
+            "| --- | ---: | --- | ---: |",
+            ([.Results[] | .Type as $type | (.Vulnerabilities // [])[] | {$type, severity: .Severity, fixed: ((.FixedVersion // "") != "")}]
+              | group_by(.type)[]
+              | "| \(.[0].type) | \(length) | \([group_by(.severity)[] | "\(.[0].severity) \(length)"] | join(", ")) | \([.[] | select(.fixed and (.severity == "HIGH" or .severity == "CRITICAL"))] | length) |")
+          ' trivy.json | tee -a "$GITHUB_STEP_SUMMARY"
+          trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 devtools:test
+
+      - name: Upload the Trivy SARIF
+        if: ${{ !cancelled() && hashFiles('trivy.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: trivy.sarif
+          category: trivy-image
+
+      - name: Log in to GHCR
+        if: ${{ env.PUBLISH == 'true' }}
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      # The push takes every layer from the build cache of the tested image. It pushes no tag:
+      # the image gets its tags after its attestation.
+      - name: Push the image by digest
+        id: push
+        if: ${{ env.PUBLISH == 'true' }}
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          sbom: true
+          provenance: mode=max
+          secrets: github_token=${{ github.token }}
+
+      - name: Attest the build provenance
+        if: ${{ env.PUBLISH == 'true' }}
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Tag the digest
+        if: ${{ env.PUBLISH == 'true' }}
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          mapfile -t tags < <(jq -r '.tags[] | "--tag=" + .' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          docker buildx imagetools create "${tags[@]}" "$IMAGE@$DIGEST"
+          docker buildx imagetools inspect "$IMAGE:latest"
+          echo "Published $IMAGE@$DIGEST" | tee -a "$GITHUB_STEP_SUMMARY"

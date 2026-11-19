@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Renovate updates each version of the image with a built-in manager: dockerfile (the sid, mise and uv images), mise (mise.toml and mise.lock), npm (npm/), pip-compile (python/) and github-actions. The apt packages float with sid, and the daily rebuild takes their updates.",
+  "extends": ["github>dan-petty/devops-cli//.github/renovate/base"],
+  "enabledManagers": ["dockerfile", "github-actions", "mise", "npm", "pip-compile"],
+  "pip-compile": {
+    "managerFilePatterns": ["/^python/[^/]+\\.txt$/"]
+  },
+  "packageRules": [
+    {
+      "description": "The tools of the image come in one pull request for their non-major updates.",
+      "matchManagers": ["mise", "npm", "pip-compile"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "tools"
+    },
+    {
+      "description": "semgrep pins mcp==1.29.0, also in its newest release (1.186.0 on 2026-11-18), so uv finds no lock with the security fix. The hold ends when the lock takes the fix.",
+      "matchManagers": ["pip-compile"],
+      "matchFileNames": ["python/semgrep.in"],
+      "matchDepTypes": ["indirect"],
+      "matchPackageNames": ["mcp"],
+      "matchCurrentVersion": "<1.30.0",
+      "enabled": false
+    },
+    {
+      "description": "semgrep pins opentelemetry-api~=1.37.0, also in its newest release (1.186.0 on 2026-11-18), so uv finds no lock with the security fix. The hold ends when the lock takes the fix.",
+      "matchManagers": ["pip-compile"],
+      "matchFileNames": ["python/semgrep.in"],
+      "matchDepTypes": ["indirect"],
+      "matchPackageNames": ["opentelemetry-api"],
+      "matchCurrentVersion": "<1.45.2",
+      "enabled": false
+    }
+  ]
+}

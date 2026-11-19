@@ -1,0 +1,7 @@
+# The build reads only these files.
+*
+!mise.toml
+!mise.lock
+!npm/package.json
+!npm/package-lock.json
+!python/*.txt
