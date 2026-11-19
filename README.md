@@ -58,7 +58,9 @@ Podman takes the place of Docker. The image has no Docker engine.
 
 `mise.lock` holds the download URL and the sha256 checksum of each mise tool for `linux-x64` and `linux-arm64`. The build runs `mise install --locked`, which refuses a tool that has no locked URL. The mise image and the uv image come into the build with `COPY --from` at a pinned digest. The build does not put mise in the image.
 
-Each Python tool has a virtual environment of its own in `/usr/local/lib/devtools`. `uv pip sync --require-hashes` refuses a distribution that the lock file does not name with its hash. The lock files of `python/` are universal: they hold the hash of the wheel of each platform. The Node tools are in `/usr/local/lib/devtools/npm`. `npm ci --ignore-scripts` checks the sha512 of each package and runs no install script. npm installs only the native package of the build platform from the optional dependencies of a package. Then `npm rebuild` runs one install script, that of Claude Code, which `allowScripts` in `npm/package.json` approves. The script links the native binary of the platform in place of the placeholder of the `claude` command.
+Each Python tool has a virtual environment of its own in `/usr/local/lib/devtools`. `uv pip sync --require-hashes` refuses a distribution that the lock file does not name with its hash. The lock files of `python/` are universal: they hold the hash of the wheel of each platform.
+
+The Node tools are in `/usr/local/lib/devtools/npm`. `npm ci --ignore-scripts` checks the sha512 of each package and runs no install script. npm installs only the native package of the build platform from the optional dependencies of a package. Then `npm rebuild` runs one install script, that of Claude Code, which `allowScripts` in `npm/package.json` approves. The script links the native binary of the platform in place of the placeholder of the `claude` command.
 
 ## Change a tool
 
