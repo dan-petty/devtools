@@ -2,9 +2,9 @@
 # check=error=true
 
 # The devtools image: Debian sid with the development tools of devops-cli. Each tool comes from one
-# source, and README.md names it: apt for a tool that sid has at a current version, mise.lock for
-# each other binary tool, the hashed requirement files of python/ for the Python tools, and
-# npm/package-lock.json for the Node tools. The image is for linux/amd64 and linux/arm64, and the
+# source, and README.md names it: apt for a tool that sid has at a current version, the mise and uv
+# images for mise, uv and uvx, mise.lock for each other binary tool, the hashed requirement files of
+# python/ for the Python tools, and npm/package-lock.json for the Node tools. The image is for linux/amd64 and linux/arm64, and the
 # Dockerfile has no code for one platform. A tool with no build for the platform stops the build.
 # The image has no login user: each consumer adds its own user.
 
@@ -16,7 +16,9 @@ FROM ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678
 # mise.lock and checks its checksum, with the retries of the mise `http_retries` setting. The step
 # copies each command as a real file to /out/bin, so that a consumer can `COPY --from` one command.
 # An archive can hold more than its command (prometheus beside promtool), so the step copies the
-# commands by name. GITHUB_TOKEN is optional; it raises the GitHub API rate limit of mise.
+# commands by name. GITHUB_TOKEN is optional; it raises the GitHub API rate limit of mise. The step
+# mounts mise from the mise image, so that this stage has no layer for it. The last stage copies
+# mise into the image.
 FROM sid AS mise-tools
 COPY --from=mise /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 WORKDIR /src
@@ -113,6 +115,7 @@ RUN --mount=type=cache,target=/root/.npm \
     && node_modules/.bin/claude --version
 
 FROM base AS devtools
+COPY --from=mise /usr/local/bin/mise /usr/local/bin/
 COPY --from=uv /uv /uvx /usr/local/bin/
 COPY --from=mise-tools /out/bin/ /usr/local/bin/
 COPY --from=python-tools /usr/local/lib/devtools/ /usr/local/lib/devtools/

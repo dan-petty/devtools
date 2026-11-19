@@ -50,13 +50,13 @@ The rule for apt: **use apt only where sid is current.** If sid does not have a 
 | --- | --- | --- | --- |
 | apt (Debian sid) | git, jq, shellcheck, curl, socat, bubblewrap, gnome-keyring, zsh, sudo, ping, tracepath, mtr, nc, tcpdump, traceroute, unzip, python3.14 (`python`), nodejs, npm, ansible-core, ansible-runner, bandit, podman, buildah, skopeo, crun, passt, uidmap, fuse-overlayfs, containers-storage | none: the packages float with sid | the daily rebuild |
 | mise | gh, kubectl, kustomize, helm, minikube, argo, argocd, kubectl-argo-rollouts, cloudflared, trivy, tofu, promtool, kube-linter, popeye, pluto, kubeconform, tflint, k9s, gitleaks, osv-scanner, golangci-lint, vale, actionlint, hadolint, gh-dash, tuicr, weaver | `mise.toml`, `mise.lock` | Renovate `mise` |
-| uv image | uv, uvx | `Dockerfile` | Renovate `dockerfile` |
+| mise and uv images | mise, uv, uvx | `Dockerfile` | Renovate `dockerfile` |
 | uv, hashed lock | semgrep, pre-commit | `python/<tool>.in`, `python/<tool>.txt` | Renovate `pip-compile` |
 | npm | openspec, devcontainer, style-dictionary, copilot, claude | `npm/package.json`, `npm/package-lock.json` | Renovate `npm` |
 
 Podman takes the place of Docker. The image has no Docker engine.
 
-`mise.lock` holds the download URL and the sha256 checksum of each mise tool for `linux-x64` and `linux-arm64`. The build runs `mise install --locked`, which refuses a tool that has no locked URL. The mise image and the uv image come into the build with `COPY --from` at a pinned digest. The build does not put mise in the image.
+`mise.lock` holds the download URL and the sha256 checksum of each mise tool for `linux-x64` and `linux-arm64`. The build runs `mise install --locked`, which refuses a tool that has no locked URL. mise, uv and uvx come from their official images at a pinned digest: the last stage copies them into `/usr/local/bin` with `COPY --from`.
 
 Each Python tool has a virtual environment of its own in `/usr/local/lib/devtools`. `uv pip sync --require-hashes` refuses a distribution that the lock file does not name with its hash. The lock files of `python/` are universal: they hold the hash of the wheel of each platform.
 
@@ -95,17 +95,21 @@ The test job runs for each event, once for each platform, on a runner of that ar
 2. Build `test/tools.Dockerfile`, which starts each tool once with no network.
 3. Build `test/copy-probe.Dockerfile`, which copies `gh` into `python:3.14-slim-trixie` and runs it.
 4. Scan the npm and Python lock files with osv-scanner. A finding fails the job.
-5. Scan the image with Trivy. The SARIF goes to code scanning in the category `trivy-image-amd64` or `trivy-image-arm64`, and the job summary names the image size, the detected OS and the finding counts. The Trivy databases come from the cache that the newest run on `main` saved.
+5. Scan the image with Trivy (`test/trivy.sh`), report-only. The SARIF goes to code scanning in the category `trivy-image-amd64` or `trivy-image-arm64`, and the job summary names the image size, the detected OS and the finding counts. The Trivy databases come from the cache that the newest run on `main` saved.
 
-On `main`, when the two test jobs pass, the push job runs once for each platform, on a runner of that architecture:
+On `main`, when the two test jobs pass, the push job runs once for each platform, on a runner of that architecture. It builds the image again with the docker-container driver, and pushes it by digest with SBOM and provenance attestations.
 
-1. Build the image again with the docker-container driver, and push it by digest with SBOM and provenance attestations.
-2. Build `test/tools.Dockerfile` on the pushed digest.
+Then the verify job runs once for each platform, on a runner of that architecture. It runs the image checks of the test job again on the pushed digest, because the publish job tags these bytes:
+
+1. Pull the pushed image into the image store of Docker.
+2. Build `test/tools.Dockerfile` and `test/copy-probe.Dockerfile` on the pushed image.
+3. Scan the pushed image with Trivy, report-only. The SARIF goes to code scanning in the category `trivy-pushed-amd64` or `trivy-pushed-arm64`.
 
 Then the publish job:
 
-1. Makes one manifest list of the two digests with `docker buildx imagetools create`, and tags it `latest` and `YYYYMMDD`.
+1. Makes one manifest list of the two digests with `docker buildx imagetools create`, and tags it `YYYYMMDD`.
 2. Attests the build provenance of the manifest list.
+3. Moves `latest` to the attested manifest list, and stops if `latest` gets a different digest.
 
 The gate is on the lock files: osv-scanner fails the job on a finding in the npm and Python locks. The Trivy scan of the image is report-only (owner decision of 2026-11-19 in #1), because the Go binaries of upstream tools at their newest release hold HIGH and CRITICAL findings that no change here can fix. The daily rebuild and the Renovate updates close the alerts in code scanning. Trivy finds no OS package findings on Debian sid, because sid has no security tracker data. The owner approved this gap on 2026-11-19.
 

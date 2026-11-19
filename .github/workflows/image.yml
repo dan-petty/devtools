@@ -44,6 +44,7 @@ jobs:
       SCHEDULED: ${{ github.event_name == 'schedule' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        timeout-minutes: 5
         with:
           persist-credentials: false
 
@@ -112,36 +113,14 @@ jobs:
           key: trivy-db-${{ steps.date.outputs.day }}
           restore-keys: trivy-db-
 
-      # The image scans itself with the Trivy of mise.lock, as the user of the runner, so that the
-      # cache step can read the databases. The scan is report-only (owner decision of 2026-11-19 in
-      # #1): the Go binaries of upstream tools at their newest release hold HIGH and CRITICAL
-      # findings that no change here can fix. Every finding goes to SARIF, and the job summary
-      # names the detected OS and the finding counts of each package type. The gate stays on the
-      # lock files (the osv-scanner step).
+      # The image scans itself with the Trivy of mise.lock (test/trivy.sh). The scan is report-only
+      # (owner decision of 2026-11-19 in #1): the Go binaries of upstream tools at their newest
+      # release hold HIGH and CRITICAL findings that no change here can fix. Every finding goes to
+      # SARIF, and the job summary names the detected OS and the finding counts of each package
+      # type. The gate stays on the lock files (the osv-scanner step).
       - name: Scan the image with Trivy
         timeout-minutes: 10
-        run: |
-          mkdir -p "$RUNNER_TEMP/trivy"
-          trivy() {
-            docker run --rm --user "$(id -u):$(id -g)" --group-add "$(stat -c %g /var/run/docker.sock)" \
-              -e TRIVY_CACHE_DIR=/cache \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              -v "$RUNNER_TEMP/trivy:/cache" \
-              -v "$PWD:/src" -w /src \
-              devtools:test trivy "$@"
-          }
-          trivy image --scanners vuln --format json --output trivy.json devtools:test
-          trivy convert --format sarif --output trivy.sarif trivy.json
-          jq -r '
-            "Detected OS: \(.Metadata.OS.Family // "none") \(.Metadata.OS.Name // "")",
-            "OS package findings: \([.Results[] | select(.Class == "os-pkgs") | (.Vulnerabilities // [])[]] | length)",
-            "",
-            "| Type | Findings | By severity | HIGH or CRITICAL with a fix |",
-            "| --- | ---: | --- | ---: |",
-            ([.Results[] | .Type as $type | (.Vulnerabilities // [])[] | {$type, severity: .Severity, fixed: ((.FixedVersion // "") != "")}]
-              | group_by(.type)[]
-              | "| \(.[0].type) | \(length) | \([group_by(.severity)[] | "\(.[0].severity) \(length)"] | join(", ")) | \([.[] | select(.fixed and (.severity == "HIGH" or .severity == "CRITICAL"))] | length) |")
-          ' trivy.json | tee -a "$GITHUB_STEP_SUMMARY"
+        run: bash test/trivy.sh devtools:test
 
       # Each platform has its own SARIF category, so that one upload does not replace the other.
       - name: Upload the Trivy SARIF
@@ -164,8 +143,8 @@ jobs:
           key: ${{ steps.trivy-cache.outputs.cache-primary-key }}
 
   # On main, after the two platforms pass: build the image of each platform again on a runner of
-  # its architecture, push it by digest with SBOM and provenance attestations, and run the tool test
-  # on the pushed digest. Only this job and the publish job can write packages.
+  # its architecture, and push it by digest with SBOM and provenance attestations. Only this job and
+  # the publish job can write packages.
   push:
     name: Push by digest (${{ matrix.platform }})
     needs: test
@@ -188,14 +167,17 @@ jobs:
       SCHEDULED: ${{ github.event_name == 'schedule' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        timeout-minutes: 5
         with:
           persist-credentials: false
 
       # The docker-container driver makes the SBOM and provenance attestations.
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        timeout-minutes: 5
 
-      # The labels of the image. The publish job uses the same tags for the manifest list.
+      # The labels of the image. The push has no tag: the publish job tags the manifest list.
       - id: meta
+        timeout-minutes: 2
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.IMAGE }}
@@ -227,16 +209,6 @@ jobs:
           no-cache: ${{ env.SCHEDULED }}
           secrets: github_token=${{ github.token }}
 
-      # The tool test runs on the pushed digest, so that the publish job tags only a tested image.
-      - name: Test the version of each tool in the pushed image
-        timeout-minutes: 5
-        env:
-          DIGEST: ${{ steps.push.outputs.digest }}
-        run: >-
-          docker buildx build --output type=cacheonly
-          --build-arg "DEVTOOLS=$IMAGE@$DIGEST"
-          --file test/tools.Dockerfile test
-
       - name: Keep the digest for the publish job
         timeout-minutes: 1
         env:
@@ -254,11 +226,119 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  # On main, after each platform is pushed: one manifest list of the platform digests, with the
-  # build provenance attestation of the list and its tags.
+  # On main, after each platform is pushed: the checks of the test job run again on the pushed
+  # digest, so that the publish job tags only the bytes that passed them. The job pulls the image of
+  # its platform into the image store of Docker, where the default builder and Trivy read it.
+  verify:
+    name: Test and scan the pushed image (${{ matrix.platform }})
+    needs: push
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            arch: amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            arch: arm64
+            runner: ubuntu-24.04-arm
+    permissions:
+      contents: read # Check out the repository.
+      packages: read # Pull the pushed image from GHCR.
+      security-events: write # Upload the Trivy SARIF to code scanning.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        timeout-minutes: 5
+        with:
+          persist-credentials: false
+
+      - name: Download the digest
+        timeout-minutes: 5
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: digests-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests
+
+      - name: Get the pushed image
+        id: pushed
+        timeout-minutes: 1
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          digests=(*)
+          [ "${#digests[@]}" -eq 1 ] || { echo "::error::Expected one digest, found: ${digests[*]}"; exit 1; }
+          echo "image=$IMAGE@sha256:${digests[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        timeout-minutes: 5
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Pull the pushed image
+        timeout-minutes: 5
+        env:
+          PUSHED: ${{ steps.pushed.outputs.image }}
+        run: docker pull "$PUSHED"
+
+      - name: Test the version of each tool in the pushed image
+        timeout-minutes: 5
+        env:
+          PUSHED: ${{ steps.pushed.outputs.image }}
+        run: >-
+          docker buildx build --builder default --no-cache --output type=cacheonly
+          --build-arg "DEVTOOLS=$PUSHED" --file test/tools.Dockerfile test
+
+      - name: Test a COPY --from of one command of the pushed image into Debian trixie
+        timeout-minutes: 5
+        env:
+          PUSHED: ${{ steps.pushed.outputs.image }}
+        run: >-
+          docker buildx build --builder default --build-arg "DEVTOOLS=$PUSHED"
+          --file test/copy-probe.Dockerfile test
+
+      - name: Get the date for the Trivy cache key
+        id: date
+        timeout-minutes: 1
+        run: echo "day=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      # The databases that the test job saved, or those of an earlier day.
+      - name: Restore the Trivy databases
+        timeout-minutes: 5
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ runner.temp }}/trivy/db
+            ${{ runner.temp }}/trivy/java-db
+          key: trivy-db-${{ steps.date.outputs.day }}
+          restore-keys: trivy-db-
+
+      # Report-only, as in the test job.
+      - name: Scan the pushed image with Trivy
+        timeout-minutes: 10
+        env:
+          PUSHED: ${{ steps.pushed.outputs.image }}
+        run: bash test/trivy.sh "$PUSHED"
+
+      # The scan of the pushed image has a category of its own, so that it does not replace the
+      # scan of the test job.
+      - name: Upload the Trivy SARIF
+        if: ${{ !cancelled() && hashFiles('trivy.sarif') != '' }}
+        timeout-minutes: 5
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: trivy.sarif
+          category: trivy-pushed-${{ matrix.arch }}
+
+  # On main, after the checks of each pushed digest pass: one manifest list of the platform digests,
+  # with the build provenance attestation of the list. The list gets the date tag, then the
+  # attestation, and `latest` moves to it only after the attestation passes.
   publish:
     name: Publish the manifest list
-    needs: push
+    needs: verify
     if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -276,6 +356,7 @@ jobs:
           merge-multiple: true
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        timeout-minutes: 5
 
       - name: Log in to GHCR
         timeout-minutes: 5
@@ -285,12 +366,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
+      # The date tag. `imagetools create` needs a tag, and `latest` comes after the attestation.
       - id: meta
+        timeout-minutes: 2
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.IMAGE }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value={{date 'YYYYMMDD'}},enable={{is_default_branch}}
 
       # One manifest list holds the image and the SBOM and provenance attestations of each
@@ -313,6 +395,20 @@ jobs:
           subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.index.outputs.digest }}
           push-to-registry: true
+
+      # A copy of a manifest list with one source and no annotation keeps the digest. The step
+      # stops if `latest` gets a different digest.
+      - name: Tag the attested manifest list latest
+        timeout-minutes: 5
+        env:
+          DIGEST: ${{ steps.index.outputs.digest }}
+        run: |
+          docker buildx imagetools create --metadata-file "$RUNNER_TEMP/latest.json" --tag "$IMAGE:latest" "$IMAGE@$DIGEST"
+          latest=$(jq -r '."containerimage.descriptor".digest' "$RUNNER_TEMP/latest.json")
+          if [ "$latest" != "$DIGEST" ]; then
+            echo "::error::latest has the digest $latest, not the attested digest $DIGEST"
+            exit 1
+          fi
 
       - name: Show the manifest list
         timeout-minutes: 5

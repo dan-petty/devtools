@@ -46,10 +46,18 @@ run tracepath -V
 run traceroute --version
 run unzip -v
 run zsh --version
-# These commands have no version option.
-command -v dbus-launch nc newgidmap newuidmap
+# These commands have no version option. `containers-storage version` needs privileges that the
+# build does not have, so the test checks only that the command is present.
+for command in containers-storage dbus-launch nc newgidmap newuidmap; do
+  echo "+ command -v $command"
+  if ! command -v "$command"; then
+    echo "FAIL: $command is missing" >&2
+    exit 1
+  fi
+done
 
-# mise
+# mise and the tools of mise.lock
+run mise --version
 run actionlint --version
 run argo version --short
 run argocd version --client --short
