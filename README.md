@@ -111,7 +111,7 @@ The test job runs for each event, once for each platform, on a runner of that ar
 7. Scan the npm and Python lock files with osv-scanner. A finding fails the job.
 8. Scan the image with Trivy (`test/trivy.sh`), report-only. The SARIF goes to code scanning in the category `trivy-image-amd64` or `trivy-image-arm64`, and the job summary names the image size, the detected OS and the finding counts. The Trivy databases come from the cache that the newest run on `main` saved.
 
-On `main`, when the two test jobs pass, the push job runs once for each platform, on a runner of that architecture. It builds the image again with the docker-container driver, and pushes it by digest with SBOM and provenance attestations. The label `org.opencontainers.image.version` of each platform image is the date tag `YYYYMMDD`.
+On `main`, when the two test jobs pass, the push job runs once for each platform, on a runner of that architecture. It builds the image again with the docker-container driver, and pushes it by digest with SBOM and provenance attestations. The label `org.opencontainers.image.version` of each platform image is the version of the run, `YYYYMMDD.<run number>`, which the version job gives at the start of the run.
 
 Then the verify job runs once for each platform, on a runner of that architecture. It runs the image checks of the test job again on the pushed digest, because the publish job tags these bytes:
 
@@ -121,7 +121,7 @@ Then the verify job runs once for each platform, on a runner of that architectur
 
 Then the publish job:
 
-1. Makes one manifest list of the two digests with `docker buildx imagetools create`, and tags it `YYYYMMDD`.
+1. Stops if the version tag exists already: a tag never moves. Then makes one manifest list of the two digests with `docker buildx imagetools create`, and tags it with the version.
 2. Attests the build provenance of the manifest list.
 3. Moves `latest` to the attested manifest list, and stops if `latest` gets a different digest.
 

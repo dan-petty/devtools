@@ -177,12 +177,28 @@ jobs:
             ${{ runner.temp }}/trivy/java-db
           key: ${{ steps.trivy-cache.outputs.cache-primary-key }}
 
+  # On main: the version of the run, for the label org.opencontainers.image.version of each
+  # platform image and the tag of the manifest list. The date comes first, so the tags sort by date,
+  # and the run number makes each tag unique. A re-run of the failed jobs keeps the version.
+  version:
+    name: Name the version
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - id: version
+        timeout-minutes: 1
+        run: echo "version=$(date -u +%Y%m%d).$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+
   # On main, after the two platforms pass: build the image of each platform again on a runner of
   # its architecture, and push it by digest with SBOM and provenance attestations. Only this job and
   # the publish job can write packages.
   push:
     name: Push by digest (${{ matrix.platform }})
-    needs: test
+    needs: [test, version]
     if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
@@ -211,14 +227,14 @@ jobs:
         timeout-minutes: 5
 
       # The labels of the image. The push has no tag: the publish job tags the manifest list. The
-      # date tag is the only tag here, so the label org.opencontainers.image.version gets the date.
+      # version is the only tag here, so the label org.opencontainers.image.version gets it.
       - id: meta
         timeout-minutes: 2
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.IMAGE }}
           tags: |
-            type=raw,value={{date 'YYYYMMDD'}},enable={{is_default_branch}}
+            type=raw,value=${{ needs.version.outputs.version }}
 
       - name: Log in to GHCR
         timeout-minutes: 5
@@ -372,7 +388,7 @@ jobs:
   # attestation, and `latest` moves to it only after the attestation passes.
   publish:
     name: Publish the manifest list
-    needs: verify
+    needs: [verify, version]
     if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -400,7 +416,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      # The date tag. `imagetools create` needs a tag, and `latest` comes after the attestation.
+      # A tag names one manifest list and never moves. The step stops when the tag exists, for
+      # example on a re-run of a publish job that made the list; a new run publishes a new tag.
+      - name: Check that the version tag is new
+        timeout-minutes: 2
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          if found=$(docker buildx imagetools inspect "$IMAGE:$VERSION" 2>&1); then
+            echo "::error::$IMAGE:$VERSION exists already, and a tag never moves"
+            exit 1
+          fi
+          if ! grep -q 'not found' <<< "$found"; then
+            echo "$found"
+            echo "::error::Cannot read $IMAGE:$VERSION"
+            exit 1
+          fi
+
+      # The version tag. `imagetools create` needs a tag, and `latest` comes after the attestation.
       # The annotations go on the manifest list: GHCR reads the description of a multi-arch image
       # from the annotations of its manifest list, not from the labels of each platform image.
       - id: meta
@@ -411,7 +444,7 @@ jobs:
         with:
           images: ${{ env.IMAGE }}
           tags: |
-            type=raw,value={{date 'YYYYMMDD'}},enable={{is_default_branch}}
+            type=raw,value=${{ needs.version.outputs.version }}
 
       # One manifest list holds the image and the SBOM and provenance attestations of each
       # platform. `imagetools create` copies no layer: each platform digest is in GHCR already.
