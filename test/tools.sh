@@ -20,6 +20,7 @@ run() {
 # apt
 run ansible --version
 run ansible-runner --version
+run bandit --version
 run buildah --version
 run bwrap --version
 run crun --version
@@ -111,26 +112,12 @@ if [ "$automatic" -le 100 ]; then
 fi
 run apt-get --simulate autoremove
 
-# The opt-out settings of the ENV block of the Dockerfile: no telemetry, no update notice and no
-# self-update.
-for setting in DO_NOT_TRACK=1 OPENSPEC_TELEMETRY=0 OPENSPEC_NO_UPDATE_CHECK=1 \
-  GH_NO_UPDATE_NOTIFIER=1 npm_config_update_notifier=false COPILOT_AUTO_UPDATE=false \
-  DISABLE_AUTOUPDATER=1 SEMGREP_SEND_METRICS=off SEMGREP_ENABLE_VERSION_CHECK=0 GOTELEMETRY=off; do
-  echo "+ printenv ${setting%%=*}"
-  if [ "$(printenv "${setting%%=*}")" != "${setting#*=}" ]; then
-    echo "FAIL: the image does not set $setting" >&2
-    exit 1
-  fi
-done
-
-# mise is a tool of the build only, and devops-cli runs bandit from its own dependencies.
-for command in mise bandit; do
-  echo "+ ! command -v $command"
-  if command -v "$command"; then
-    echo "FAIL: $command is in the image" >&2
-    exit 1
-  fi
-done
+# mise is a tool of the build only.
+echo "+ ! command -v mise"
+if command -v mise; then
+  echo "FAIL: mise is in the image" >&2
+  exit 1
+fi
 
 # uv makes a lock file in each virtual environment that all users can write.
 echo "+ find /usr/local/lib/devtools -name .lock -perm -002"

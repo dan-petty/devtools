@@ -23,7 +23,7 @@ Or copy one command into a different image. Each command that mise installs is a
 COPY --from=ghcr.io/dan-petty/devtools:latest@sha256:<digest> /usr/local/bin/gh /usr/local/bin/gh
 ```
 
-The image sets environment variables that stop the telemetry, the update notices and the self-update of its tools: `DO_NOT_TRACK`, and the variables of OpenSpec, gh, npm, Copilot, Claude Code, Semgrep and Go. A tool of the image gets a new version only with a new image. The `ENV` block of the last stage of the `Dockerfile` sets them, and a consumer image gets them from the base image. Copilot still writes a copy of its package to `~/.cache/copilot/pkg` when a new version starts for the first time.
+The image sets environment variables that stop the telemetry, the update notices and the self-update of its tools: `DO_NOT_TRACK`, and the variables of OpenSpec, gh, npm, Copilot, Claude Code and Semgrep. A tool of the image gets a new version only with a new image. The `ENV` block of the last stage of the `Dockerfile` sets them, and a consumer image gets them from the base image. Copilot still writes a copy of its package to `~/.cache/copilot/pkg` when a new version starts for the first time.
 
 Each published image has a build provenance attestation. To verify it:
 
@@ -86,7 +86,7 @@ docker buildx build --builder default --no-cache --output type=cacheonly --build
 docker buildx build --builder default --build-arg DEVTOOLS=devtools:test --file test/copy-probe.Dockerfile test
 ```
 
-`test/manifests.sh` checks that the copy loop of the `Dockerfile` and `mise.toml` name the same commands. `test/tools.Dockerfile` runs `test/tools.sh` in the image with no network. Each tool prints its version once, and each command has a timeout of 60 s. Then the script checks the state of the image: apt marks the dependencies as automatic, the opt-out variables have their values, the image has no `mise` or `bandit` command, and no lock file of `/usr/local/lib/devtools` is writable by all users.
+`test/manifests.sh` checks that the copy loop of the `Dockerfile` and `mise.toml` name the same commands. `test/tools.Dockerfile` runs `test/tools.sh` in the image with no network. Each tool prints its version once, and each command has a timeout of 60 s. Then the script checks the state of the image: apt marks the dependencies as automatic, the image has no `mise` command, and no lock file of `/usr/local/lib/devtools` is writable by all users.
 
 mise reads the GitHub API. To raise its rate limit, give the build a token: `--secret id=github_token,env=GITHUB_TOKEN`.
 

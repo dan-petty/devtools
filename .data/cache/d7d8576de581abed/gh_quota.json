@@ -1,0 +1,128 @@
+{
+  "_global": {
+    "total_requests": 1,
+    "last_request_epoch": 1795188107.6185966,
+    "total_throttles": 0,
+    "total_wait_seconds": 0.0
+  },
+  "core": {
+    "limit": 5000,
+    "remaining": 4449,
+    "used": 551,
+    "reset_epoch": 1795189380.0,
+    "last_updated": 1795188108.051384,
+    "last_request_epoch": 1795188108.051384
+  },
+  "search": {
+    "limit": 30,
+    "remaining": 30,
+    "used": 0,
+    "reset_epoch": 1795188171.0,
+    "last_updated": 1795188108.0255728,
+    "last_request_epoch": null
+  },
+  "graphql": {
+    "limit": 5000,
+    "remaining": 4881,
+    "used": 119,
+    "reset_epoch": 1795188820.0,
+    "last_updated": 1795188108.0263522,
+    "last_request_epoch": null
+  },
+  "integration_manifest": {
+    "limit": 5000,
+    "remaining": 5000,
+    "used": 0,
+    "reset_epoch": 1795191711.0,
+    "last_updated": 1795188108.0301762,
+    "last_request_epoch": null
+  },
+  "source_import": {
+    "limit": 100,
+    "remaining": 100,
+    "used": 0,
+    "reset_epoch": 1795188171.0,
+    "last_updated": 1795188108.0314078,
+    "last_request_epoch": null
+  },
+  "code_scanning_autofix": {
+    "limit": 10,
+    "remaining": 10,
+    "used": 0,
+    "reset_epoch": 1795188171.0,
+    "last_updated": 1795188108.0384405,
+    "last_request_epoch": null
+  },
+  "actions_runner_registration": {
+    "limit": 10000,
+    "remaining": 10000,
+    "used": 0,
+    "reset_epoch": 1795191711.0,
+    "last_updated": 1795188108.039391,
+    "last_request_epoch": null
+  },
+  "scim": {
+    "limit": 15000,
+    "remaining": 15000,
+    "used": 0,
+    "reset_epoch": 1795191711.0,
+    "last_updated": 1795188108.0400646,
+    "last_request_epoch": null
+  },
+  "dependency_snapshots": {
+    "limit": 100,
+    "remaining": 100,
+    "used": 0,
+    "reset_epoch": 1795188171.0,
+    "last_updated": 1795188108.0407116,
+    "last_request_epoch": null
+  },
+  "dependency_sbom": {
+    "limit": 100,
+    "remaining": 100,
+    "used": 0,
+    "reset_epoch": 1795188171.0,
+    "last_updated": 1795188108.0413895,
+    "last_request_epoch": null
+  },
+  "audit_log": {
+    "limit": 1750,
+    "remaining": 1750,
+    "used": 0,
+    "reset_epoch": 1795191711.0,
+    "last_updated": 1795188108.0419843,
+    "last_request_epoch": null
+  },
+  "audit_log_streaming": {
+    "limit": 15,
+    "remaining": 15,
+    "used": 0,
+    "reset_epoch": 1795191711.0,
+    "last_updated": 1795188108.0432613,
+    "last_request_epoch": null
+  },
+  "code_search": {
+    "limit": 10,
+    "remaining": 10,
+    "used": 0,
+    "reset_epoch": 1795188171.0,
+    "last_updated": 1795188108.0439394,
+    "last_request_epoch": null
+  },
+  "copilot_usage_records": {
+    "limit": 1750,
+    "remaining": 1750,
+    "used": 0,
+    "reset_epoch": 1795191711.0,
+    "last_updated": 1795188108.0446851,
+    "last_request_epoch": null
+  },
+  "enterprise_token_inventory": {
+    "limit": 1750,
+    "remaining": 1750,
+    "used": 0,
+    "reset_epoch": 1795191711.0,
+    "last_updated": 1795188108.045398,
+    "last_request_epoch": null
+  }
+}

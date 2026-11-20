@@ -52,6 +52,7 @@ RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
        ansible-core \
+       bandit \
        bubblewrap \
        buildah \
        ca-certificates \
@@ -128,8 +129,7 @@ ENV DO_NOT_TRACK=1 \
     COPILOT_AUTO_UPDATE=false \
     DISABLE_AUTOUPDATER=1 \
     SEMGREP_SEND_METRICS=off \
-    SEMGREP_ENABLE_VERSION_CHECK=0 \
-    GOTELEMETRY=off
+    SEMGREP_ENABLE_VERSION_CHECK=0
 COPY --from=uv /uv /uvx /usr/local/bin/
 COPY --from=mise-tools /out/bin/ /usr/local/bin/
 COPY --from=python-tools /usr/local/lib/devtools/ /usr/local/lib/devtools/
