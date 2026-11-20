@@ -96,8 +96,6 @@ docker run --rm -v "$PWD:/src:ro" -w /src devtools:test shellcheck test/*.sh
 
 `test/manifests.sh` checks that the copy loop of the `Dockerfile` and `mise.toml` name the same commands. `test/tools.Dockerfile` runs `test/tools.sh` in the image with no network. Each tool prints its version once, and each command has a timeout of 60 s. Then the script checks the state of the image: apt marks the dependencies as automatic, the image has no `mise` command, and no lock file of `/usr/local/lib/devtools` is writable by all users.
 
-mise reads the GitHub API. To raise its rate limit, give the build a token: `--secret id=github_token,env=GITHUB_TOKEN`.
-
 ## CI
 
 The workflow [`image.yml`](.github/workflows/image.yml) runs for each pull request, for each push to `main`, each day at 04:17 UTC, and on demand.

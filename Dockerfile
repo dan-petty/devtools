@@ -18,15 +18,14 @@ FROM ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678
 # copies each command as a real file to /out/bin, so that a consumer can `COPY --from` one command.
 # An archive can hold more than its command (prometheus beside promtool), so the step copies the
 # commands by name, and test/manifests.sh checks that the loop names each tool of mise.toml.
-# GITHUB_TOKEN is optional; it raises the GitHub API rate limit of mise. The step mounts mise from
-# the mise image, so that no layer has mise.
+# The step makes no GitHub API request, so it gets no credential. The step mounts mise from the
+# mise image, so that no layer has mise.
 FROM sid AS mise-tools
 COPY --from=mise /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 WORKDIR /src
 RUN --mount=type=bind,from=mise,source=/usr/local/bin/mise,target=/usr/local/bin/mise \
     --mount=type=bind,source=mise.toml,target=/src/mise.toml \
     --mount=type=bind,source=mise.lock,target=/src/mise.lock \
-    --mount=type=secret,id=github_token,env=GITHUB_TOKEN \
     export MISE_DATA_DIR=/tmp/mise MISE_CACHE_DIR=/tmp/mise/cache MISE_YES=1 \
     && mise install --locked \
     && mkdir -p /out/bin \
