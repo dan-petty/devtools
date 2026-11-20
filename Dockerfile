@@ -4,9 +4,9 @@
 # The devtools image: Debian sid with the development tools of devops-cli. Each tool comes from one
 # source, and README.md names it: apt for a tool that sid has at a current version, the uv image
 # for uv and uvx, mise.lock for each other binary tool, the hashed requirement files of python/ for
-# the Python tools, and npm/package-lock.json for the Node tools. Only the build uses mise: the image
-# has no mise command. The image is for linux/amd64 and linux/arm64, and the Dockerfile has no code
-# for one platform. A tool with no build for the platform stops the build.
+# the Python tools, and npm/package-lock.json for the Node tools. Only the build uses mise: the
+# image has no mise command. The image is for linux/amd64 and linux/arm64, and the Dockerfile has
+# no code for one platform. A tool with no build for the platform stops the build.
 # The image has no login user: each consumer adds its own user.
 
 FROM debian:sid@sha256:e276677157e13bc51ea5b8651f54ad28883f503cc37b3e3af2c4b6cc2f4efe7b AS sid

@@ -54,9 +54,19 @@ jobs:
         timeout-minutes: 1
         run: bash test/manifests.sh
 
+      # The lint steps run on one platform, because their result is the same on each platform.
+      # The image has no zizmor, so zizmor comes from its official image at a pinned digest. It runs
+      # offline and gets no token.
+      - name: Lint the workflows with zizmor
+        if: ${{ matrix.arch == 'amd64' }}
+        timeout-minutes: 2
+        uses: docker://ghcr.io/zizmorcore/zizmor:1.32.0@sha256:3014cc8f68f663935f69b3c3e0e41f5ce102b268d97db13db0f62208747f860d
+        with:
+          args: --offline .github/workflows
+
       # The default builder uses the docker driver: the image goes into the image store of Docker
-      # with no export, so the job sends no tarball of the 4.6 GB image to Docker. The scheduled
-      # rebuild pulls the base images again and uses no cache.
+      # with no export, so the job sends no tarball of the image to Docker. The scheduled rebuild
+      # pulls the base images again and uses no cache.
       - name: Build
         timeout-minutes: 15
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -76,6 +86,26 @@ jobs:
         run: |
           size=$(docker history --human=false --format '{{.Size}}' devtools:test | awk '{ sum += $1 } END { print sum }')
           echo "Image size ($PLATFORM): $(numfmt --to=si "$size")B, the sum of the uncompressed layers" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # hadolint, actionlint and shellcheck come from the image that this job built, so a pull
+      # request that updates one of them lints with the new version. actionlint also runs the
+      # shellcheck of the image on each `run` script.
+      - name: Lint the Dockerfiles with hadolint
+        if: ${{ matrix.arch == 'amd64' }}
+        timeout-minutes: 2
+        run: >-
+          docker run --rm -v "$PWD:/src:ro" -w /src devtools:test
+          hadolint Dockerfile test/*.Dockerfile
+
+      - name: Lint the workflows with actionlint
+        if: ${{ matrix.arch == 'amd64' }}
+        timeout-minutes: 2
+        run: docker run --rm -v "$PWD:/src:ro" -w /src devtools:test actionlint
+
+      - name: Lint the test scripts with shellcheck
+        if: ${{ matrix.arch == 'amd64' }}
+        timeout-minutes: 2
+        run: docker run --rm -v "$PWD:/src:ro" -w /src devtools:test shellcheck test/*.sh
 
       # The default builder reads the image that the build put into the image store of Docker.
       - name: Test the version of each tool
@@ -181,14 +211,14 @@ jobs:
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         timeout-minutes: 5
 
-      # The labels of the image. The push has no tag: the publish job tags the manifest list.
+      # The labels of the image. The push has no tag: the publish job tags the manifest list. The
+      # date tag is the only tag here, so the label org.opencontainers.image.version gets the date.
       - id: meta
         timeout-minutes: 2
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.IMAGE }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value={{date 'YYYYMMDD'}},enable={{is_default_branch}}
 
       - name: Log in to GHCR
