@@ -23,7 +23,7 @@ Or copy one command into a different image. Each command that mise installs is a
 COPY --from=ghcr.io/dan-petty/devtools:latest@sha256:<digest> /usr/local/bin/gh /usr/local/bin/gh
 ```
 
-The image sets environment variables that stop the telemetry, the update notices and the self-update of its tools: `DO_NOT_TRACK`, and the variables of OpenSpec, gh, npm, Copilot, Claude Code and Semgrep. A tool of the image gets a new version only with a new image. The `ENV` block of the last stage of the `Dockerfile` sets them, and a consumer image gets them from the base image. Copilot downloads no newer version by itself. It still writes one copy of its package for each version to `~/.cache/copilot/pkg`, when that version starts for the first time.
+The image sets environment variables that stop the telemetry, the update notices and the self-update of its tools: `DO_NOT_TRACK`, and the variables of OpenSpec, gh, npm, Copilot, Claude Code and Semgrep. A tool of the image gets a new version only with a new image. The `ENV` block of the last stage of the `Dockerfile` sets them, and a consumer image gets them from the base image. The build stops the install-tracking requests of mise. Copilot downloads no newer version by itself. It still writes one copy of its package for each version to `~/.cache/copilot/pkg`, when that version starts for the first time.
 
 Each published image has a build provenance attestation. To verify it:
 

@@ -23,6 +23,9 @@ FROM ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678
 FROM sid AS mise-tools
 COPY --from=mise /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 WORKDIR /src
+# mise sends a request to mise-versions.jdx.dev for each tool that it installs. DO_NOT_TRACK does
+# not stop these requests; MISE_USE_VERSIONS_HOST_TRACK=0 stops them.
+ENV MISE_USE_VERSIONS_HOST_TRACK=0
 RUN --mount=type=bind,from=mise,source=/usr/local/bin/mise,target=/usr/local/bin/mise \
     --mount=type=bind,source=mise.toml,target=/src/mise.toml \
     --mount=type=bind,source=mise.lock,target=/src/mise.lock \
