@@ -86,6 +86,14 @@ docker buildx build --builder default --no-cache --output type=cacheonly --build
 docker buildx build --builder default --build-arg DEVTOOLS=devtools:test --file test/copy-probe.Dockerfile test
 ```
 
+The lint steps of the CI use the tools of the image:
+
+```sh
+docker run --rm -v "$PWD:/src:ro" -w /src devtools:test hadolint Dockerfile test/*.Dockerfile
+docker run --rm -v "$PWD:/src:ro" -w /src devtools:test actionlint
+docker run --rm -v "$PWD:/src:ro" -w /src devtools:test shellcheck test/*.sh
+```
+
 `test/manifests.sh` checks that the copy loop of the `Dockerfile` and `mise.toml` name the same commands. `test/tools.Dockerfile` runs `test/tools.sh` in the image with no network. Each tool prints its version once, and each command has a timeout of 60 s. Then the script checks the state of the image: apt marks the dependencies as automatic, the image has no `mise` command, and no lock file of `/usr/local/lib/devtools` is writable by all users.
 
 mise reads the GitHub API. To raise its rate limit, give the build a token: `--secret id=github_token,env=GITHUB_TOKEN`.
@@ -97,13 +105,15 @@ The workflow [`image.yml`](.github/workflows/image.yml) runs for each pull reque
 The test job runs for each event, once for each platform, on a runner of that architecture. Its token cannot write packages.
 
 1. Run `test/manifests.sh`, which fails when the copy loop of the `Dockerfile` does not name a tool of `mise.toml`.
-2. Build the image with the docker driver of the default builder. The image goes into the image store of Docker with no export. The daily build uses `--pull --no-cache`.
-3. Build `test/tools.Dockerfile`, which starts each tool once with no network and checks the state of the image.
-4. Build `test/copy-probe.Dockerfile`, which copies `gh` into `python:3.14-slim-trixie` and runs it.
-5. Scan the npm and Python lock files with osv-scanner. A finding fails the job.
-6. Scan the image with Trivy (`test/trivy.sh`), report-only. The SARIF goes to code scanning in the category `trivy-image-amd64` or `trivy-image-arm64`, and the job summary names the image size, the detected OS and the finding counts. The Trivy databases come from the cache that the newest run on `main` saved.
+2. On `linux/amd64` only: lint the workflows with zizmor, offline. zizmor comes from its official image at a pinned digest, because the image has no zizmor. A finding fails the job.
+3. Build the image with the docker driver of the default builder. The image goes into the image store of Docker with no export. The daily build uses `--pull --no-cache`.
+4. On `linux/amd64` only: lint each Dockerfile with hadolint, the workflows with actionlint (which also runs shellcheck on each `run` script), and `test/*.sh` with shellcheck. The three tools come from the image that the job built, so a pull request that updates one of them lints with the new version. A finding fails the job.
+5. Build `test/tools.Dockerfile`, which starts each tool once with no network and checks the state of the image.
+6. Build `test/copy-probe.Dockerfile`, which copies `gh` into `python:3.14-slim-trixie` and runs it.
+7. Scan the npm and Python lock files with osv-scanner. A finding fails the job.
+8. Scan the image with Trivy (`test/trivy.sh`), report-only. The SARIF goes to code scanning in the category `trivy-image-amd64` or `trivy-image-arm64`, and the job summary names the image size, the detected OS and the finding counts. The Trivy databases come from the cache that the newest run on `main` saved.
 
-On `main`, when the two test jobs pass, the push job runs once for each platform, on a runner of that architecture. It builds the image again with the docker-container driver, and pushes it by digest with SBOM and provenance attestations.
+On `main`, when the two test jobs pass, the push job runs once for each platform, on a runner of that architecture. It builds the image again with the docker-container driver, and pushes it by digest with SBOM and provenance attestations. The label `org.opencontainers.image.version` of each platform image is the date tag `YYYYMMDD`.
 
 Then the verify job runs once for each platform, on a runner of that architecture. It runs the image checks of the test job again on the pushed digest, because the publish job tags these bytes:
 
