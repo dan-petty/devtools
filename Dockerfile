@@ -2,10 +2,11 @@
 # check=error=true
 
 # The devtools image: Debian sid with the development tools of devops-cli. Each tool comes from one
-# source, and README.md names it: apt for a tool that sid has at a current version, the mise and uv
-# images for mise, uv and uvx, mise.lock for each other binary tool, the hashed requirement files of
-# python/ for the Python tools, and npm/package-lock.json for the Node tools. The image is for linux/amd64 and linux/arm64, and the
-# Dockerfile has no code for one platform. A tool with no build for the platform stops the build.
+# source, and README.md names it: apt for a tool that sid has at a current version, the uv image
+# for uv and uvx, mise.lock for each other binary tool, the hashed requirement files of python/ for
+# the Python tools, and npm/package-lock.json for the Node tools. Only the build uses mise: the image
+# has no mise command. The image is for linux/amd64 and linux/arm64, and the Dockerfile has no code
+# for one platform. A tool with no build for the platform stops the build.
 # The image has no login user: each consumer adds its own user.
 
 FROM debian:sid@sha256:e276677157e13bc51ea5b8651f54ad28883f503cc37b3e3af2c4b6cc2f4efe7b AS sid
@@ -16,9 +17,9 @@ FROM ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678
 # mise.lock and checks its checksum, with the retries of the mise `http_retries` setting. The step
 # copies each command as a real file to /out/bin, so that a consumer can `COPY --from` one command.
 # An archive can hold more than its command (prometheus beside promtool), so the step copies the
-# commands by name. GITHUB_TOKEN is optional; it raises the GitHub API rate limit of mise. The step
-# mounts mise from the mise image, so that this stage has no layer for it. The last stage copies
-# mise into the image.
+# commands by name, and test/manifests.sh checks that the loop names each tool of mise.toml.
+# GITHUB_TOKEN is optional; it raises the GitHub API rate limit of mise. The step mounts mise from
+# the mise image, so that no layer has mise.
 FROM sid AS mise-tools
 COPY --from=mise /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 WORKDIR /src
@@ -38,17 +39,16 @@ RUN --mount=type=bind,from=mise,source=/usr/local/bin/mise,target=/usr/local/bin
 
 # The apt packages. Each one floats with sid, and the scheduled rebuild takes their updates:
 # `apt-get upgrade` also updates the packages of the base image. The packages have no version pins
-# (hadolint DL3008). The step uses the apt cache pattern of the Docker documentation: the cache
-# mounts keep the package lists and the downloaded packages out of the image. Podman takes the
-# place of Docker, so the image has no Docker engine. dbus-x11 gives gnome-keyring its session bus.
+# (hadolint DL3008). The step removes the package lists in its layer, and the docker-clean
+# configuration of the Debian image removes the downloaded packages. The step has no cache mount: a
+# cache mount on /var/lib/apt keeps /var/lib/apt/extended_states out of the layer, and apt then
+# marks each package as manual. The CI keeps no build cache, so a cache mount makes no build faster.
+# Podman takes the place of Docker, so the image has no Docker engine. dbus-x11 gives gnome-keyring
+# its session bus.
 FROM sid AS base
 ARG DEBIAN_FRONTEND=noninteractive
-RUN rm -f /etc/apt/apt.conf.d/docker-clean \
-    && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 # hadolint ignore=DL3008
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update \
+RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
        ansible-core \
@@ -83,11 +83,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        traceroute \
        uidmap \
        unzip \
-       zsh
+       zsh \
+    && rm -rf /var/lib/apt/lists/*
 
 # The Python tools, each in a virtual environment of its own. `--require-hashes` refuses a
 # distribution that the requirement file does not name with its hash. `UV_NO_BUILD` refuses to
 # build a distribution from source, so a package with no wheel for the platform fails the build.
+# uv makes a .lock file in each environment that all users can write. The image does not use the
+# lock files after the sync, so the step removes them.
 FROM base AS python-tools
 RUN --mount=type=bind,from=uv,source=/uv,target=/usr/local/bin/uv \
     --mount=type=bind,source=python,target=/tmp/python \
@@ -98,7 +101,8 @@ RUN --mount=type=bind,from=uv,source=/uv,target=/usr/local/bin/uv \
          && uv pip sync --require-hashes --python "/usr/local/lib/devtools/$tool/bin/python" \
               "/tmp/python/$tool.txt" \
          || exit 1; \
-       done
+       done \
+    && rm -f /usr/local/lib/devtools/*/.lock
 
 # The Node tools. `npm ci` installs the lockfile, and npm checks the sha512 of each package.
 # `--ignore-scripts` runs no install script. From the optional dependencies of a package, npm
@@ -115,7 +119,17 @@ RUN --mount=type=cache,target=/root/.npm \
     && node_modules/.bin/claude --version
 
 FROM base AS devtools
-COPY --from=mise /usr/local/bin/mise /usr/local/bin/
+# The settings of the tools for each consumer image: no telemetry, no update notice and no
+# self-update. A tool of the image gets a new version only with a new image.
+ENV DO_NOT_TRACK=1 \
+    OPENSPEC_TELEMETRY=0 \
+    OPENSPEC_NO_UPDATE_CHECK=1 \
+    GH_NO_UPDATE_NOTIFIER=1 \
+    npm_config_update_notifier=false \
+    COPILOT_AUTO_UPDATE=false \
+    DISABLE_AUTOUPDATER=1 \
+    SEMGREP_SEND_METRICS=off \
+    SEMGREP_ENABLE_VERSION_CHECK=0
 COPY --from=uv /uv /uvx /usr/local/bin/
 COPY --from=mise-tools /out/bin/ /usr/local/bin/
 COPY --from=python-tools /usr/local/lib/devtools/ /usr/local/lib/devtools/
@@ -129,7 +143,4 @@ RUN ln -s ../lib/devtools/pre-commit/bin/pre-commit \
           ../lib/devtools/npm/node_modules/.bin/devcontainer \
           ../lib/devtools/npm/node_modules/.bin/openspec \
           ../lib/devtools/npm/node_modules/.bin/style-dictionary \
-          /usr/local/bin/ \
-    && rm /etc/apt/apt.conf.d/keep-cache
-# A consumer image runs apt with the configuration of the Debian image.
-COPY --from=sid /etc/apt/apt.conf.d/docker-clean /etc/apt/apt.conf.d/docker-clean
+          /usr/local/bin/
