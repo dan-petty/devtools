@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs each tool of the image once and prints its version. A tool that is missing, that does not
-# start or that runs for more than 60 s fails the test with its name. test/tools.Dockerfile runs
-# this script in the image with no network.
+# start or that runs for more than 60 s fails the test with its name. Then the script checks the
+# state of the image. test/tools.Dockerfile runs this script in the image with no network.
 set -euo pipefail
 
 # The timeout of each command is shorter than the timeout of the CI step.
@@ -20,7 +20,6 @@ run() {
 # apt
 run ansible --version
 run ansible-runner --version
-run bandit --version
 run buildah --version
 run bwrap --version
 run crun --version
@@ -56,8 +55,7 @@ for command in containers-storage dbus-launch nc newgidmap newuidmap; do
   fi
 done
 
-# mise and the tools of mise.lock
-run mise --version
+# The tools of mise.lock
 run actionlint --version
 run argo version --short
 run argocd version --client --short
@@ -99,3 +97,45 @@ run copilot --version
 run devcontainer --version
 run openspec --version
 run style-dictionary --version
+
+# The state of the image. apt keeps the automatic mark of each dependency, so that
+# `apt-get autoremove` can find the packages that no package needs. Most packages of the image are
+# dependencies. When a cache mount hid /var/lib/apt/extended_states, apt marked only 77 of 764
+# packages as automatic.
+echo "+ apt-mark showauto | wc -l"
+automatic=$(apt-mark showauto | wc -l)
+echo "$automatic"
+if [ "$automatic" -le 100 ]; then
+  echo "FAIL: apt marks only $automatic packages as automatic" >&2
+  exit 1
+fi
+run apt-get --simulate autoremove
+
+# The opt-out settings of the ENV block of the Dockerfile: no telemetry, no update notice and no
+# self-update.
+for setting in DO_NOT_TRACK=1 OPENSPEC_TELEMETRY=0 OPENSPEC_NO_UPDATE_CHECK=1 \
+  GH_NO_UPDATE_NOTIFIER=1 npm_config_update_notifier=false COPILOT_AUTO_UPDATE=false \
+  DISABLE_AUTOUPDATER=1 SEMGREP_SEND_METRICS=off SEMGREP_ENABLE_VERSION_CHECK=0 GOTELEMETRY=off; do
+  echo "+ printenv ${setting%%=*}"
+  if [ "$(printenv "${setting%%=*}")" != "${setting#*=}" ]; then
+    echo "FAIL: the image does not set $setting" >&2
+    exit 1
+  fi
+done
+
+# mise is a tool of the build only, and devops-cli runs bandit from its own dependencies.
+for command in mise bandit; do
+  echo "+ ! command -v $command"
+  if command -v "$command"; then
+    echo "FAIL: $command is in the image" >&2
+    exit 1
+  fi
+done
+
+# uv makes a lock file in each virtual environment that all users can write.
+echo "+ find /usr/local/lib/devtools -name .lock -perm -002"
+writable=$(find /usr/local/lib/devtools -name .lock -perm -002)
+if [ -n "$writable" ]; then
+  echo "FAIL: all users can write these lock files: $writable" >&2
+  exit 1
+fi

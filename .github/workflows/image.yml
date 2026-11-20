@@ -48,6 +48,12 @@ jobs:
         with:
           persist-credentials: false
 
+      # The image gets only the commands that the copy loop of the Dockerfile names, so a tool of
+      # mise.toml that the loop does not name is not in the image.
+      - name: Check that the copy loop names each tool of mise.toml
+        timeout-minutes: 1
+        run: bash test/manifests.sh
+
       # The default builder uses the docker driver: the image goes into the image store of Docker
       # with no export, so the job sends no tarball of the 4.6 GB image to Docker. The scheduled
       # rebuild pulls the base images again and uses no cache.
