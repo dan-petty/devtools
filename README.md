@@ -127,6 +127,8 @@ Then the publish job:
 2. Attests the build provenance of the manifest list.
 3. Moves `latest` to the attested manifest list, and stops if `latest` gets a different digest.
 
+The manifest list has the OCI annotations of `docker/metadata-action`, such as `org.opencontainers.image.description`, `source` and `licenses`. GHCR shows the description of a multi-arch image from these annotations.
+
 The gate is on the lock files: osv-scanner fails the job on a finding in the npm and Python locks. The Trivy scan of the image is report-only (owner decision of 2026-11-19 in #1), because the Go binaries of upstream tools at their newest release hold HIGH and CRITICAL findings that no change here can fix. The daily rebuild and the Renovate updates close the alerts in code scanning. Trivy finds no OS package findings on Debian sid, because sid has no security tracker data. The owner approved this gap on 2026-11-19.
 
 An ignore of a finding that has no released fix has a reason, a tracking issue and an end date. `python/osv-scanner.toml` holds the ignores of the Python lock files.

@@ -403,8 +403,12 @@ jobs:
           password: ${{ github.token }}
 
       # The date tag. `imagetools create` needs a tag, and `latest` comes after the attestation.
+      # The annotations go on the manifest list: GHCR reads the description of a multi-arch image
+      # from the annotations of its manifest list, not from the labels of each platform image.
       - id: meta
         timeout-minutes: 2
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: index
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.IMAGE }}
@@ -417,11 +421,15 @@ jobs:
         id: index
         timeout-minutes: 5
         working-directory: ${{ runner.temp }}/digests
+        env:
+          ANNOTATIONS: ${{ steps.meta.outputs.annotations }}
         run: |
           mapfile -t tags < <(jq -r '.tags[] | "--tag=" + .' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          mapfile -t annotations < <(sed -e '/^$/d' -e 's/^/--annotation=/' <<< "$ANNOTATIONS")
           sources=()
           for digest in *; do sources+=("$IMAGE@sha256:$digest"); done
-          docker buildx imagetools create --metadata-file "$RUNNER_TEMP/index.json" "${tags[@]}" "${sources[@]}"
+          docker buildx imagetools create --metadata-file "$RUNNER_TEMP/index.json" \
+            "${tags[@]}" "${annotations[@]}" "${sources[@]}"
           echo "digest=$(jq -r '."containerimage.descriptor".digest' "$RUNNER_TEMP/index.json")" >> "$GITHUB_OUTPUT"
 
       - name: Attest the build provenance
