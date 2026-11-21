@@ -30,6 +30,15 @@
       "matchPackageNames": ["opentelemetry-api"],
       "matchCurrentVersion": "<1.45.2",
       "enabled": false
+    },
+    {
+      "description": "semgrep requires wcmatch~=8.3, also in its newest release (1.186.0 on 2026-11-21), and only wcmatch 11.2 has the fix of GHSA-53pm-wgxf-c6qf, so uv finds no lock with it. The hold ends when the lock takes the fix.",
+      "matchManagers": ["pip-compile"],
+      "matchFileNames": ["python/semgrep.in"],
+      "matchDepTypes": ["indirect"],
+      "matchPackageNames": ["wcmatch"],
+      "matchCurrentVersion": "<11.2",
+      "enabled": false
     }
   ]
 }
