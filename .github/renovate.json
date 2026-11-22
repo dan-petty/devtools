@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description": "Renovate updates each version of the image with a built-in manager: dockerfile (the sid, mise and uv images), mise (mise.toml and mise.lock), npm (npm/), pip-compile (python/) and github-actions. The apt packages float with sid, and the daily rebuild takes their updates.",
-  "extends": ["github>dan-petty/devops-cli//.github/renovate/base"],
+  "extends": ["github>dan-petty/infra//renovate/base"],
   "enabledManagers": ["dockerfile", "github-actions", "mise", "npm", "pip-compile"],
   "pip-compile": {
     "managerFilePatterns": ["/^python/[^/]+\\.txt$/"]
