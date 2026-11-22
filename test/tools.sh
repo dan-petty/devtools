@@ -29,6 +29,7 @@ run fuse-overlayfs --version
 run git --version
 run gnome-keyring-daemon --version
 run jq --version
+run make --version
 run mtr --version
 run node --version
 run npm --version
