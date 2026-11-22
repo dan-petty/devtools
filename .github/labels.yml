@@ -26,3 +26,12 @@
 - name: "scope/docs"
   color: "DCDCD6"
   description: "README and other documents"
+
+# release-please finds its release pull request by these labels (release.yml).
+- name: "autorelease: pending"
+  color: "DCDCD6"
+  description: "The release pull request that release-please keeps open"
+
+- name: "autorelease: tagged"
+  color: "DCDCD6"
+  description: "A release pull request whose release release-please created"

@@ -8,6 +8,11 @@
   },
   "packageRules": [
     {
+      "description": "An update of a tool or a base image of the image changes the image, so its commit type is fix: release-please makes no release for the type chore of the shared preset (README.md, \"Releases\"). An update of a GitHub action or of a test image does not change the image and keeps the type chore.",
+      "matchFileNames": ["Dockerfile", "mise.toml", "npm/**", "python/**"],
+      "commitMessagePrefix": "fix(deps):"
+    },
+    {
       "description": "The tools of the image come in one pull request for their non-major updates.",
       "matchManagers": ["mise", "npm", "pip-compile"],
       "matchUpdateTypes": ["minor", "patch"],
