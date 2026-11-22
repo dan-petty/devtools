@@ -99,7 +99,7 @@ RUN --mount=type=bind,from=uv,source=/uv,target=/usr/local/bin/uv \
     --mount=type=bind,source=python,target=/tmp/python \
     --mount=type=cache,target=/root/.cache/uv \
     export UV_PYTHON_DOWNLOADS=never UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1 UV_NO_BUILD=1 \
-    && for tool in pre-commit semgrep; do \
+    && for tool in copier pre-commit semgrep; do \
          uv venv --python /usr/bin/python3.14 "/usr/local/lib/devtools/$tool" \
          && uv pip sync --require-hashes --python "/usr/local/lib/devtools/$tool/bin/python" \
               "/tmp/python/$tool.txt" \
@@ -138,7 +138,8 @@ COPY --from=mise-tools /out/bin/ /usr/local/bin/
 COPY --from=python-tools /usr/local/lib/devtools/ /usr/local/lib/devtools/
 COPY --from=npm-tools /usr/local/lib/devtools/npm/ /usr/local/lib/devtools/npm/
 # The commands of the Python and Node tools go on PATH.
-RUN ln -s ../lib/devtools/pre-commit/bin/pre-commit \
+RUN ln -s ../lib/devtools/copier/bin/copier \
+          ../lib/devtools/pre-commit/bin/pre-commit \
           ../lib/devtools/semgrep/bin/semgrep \
           ../lib/devtools/semgrep/bin/pysemgrep \
           ../lib/devtools/npm/node_modules/.bin/claude \

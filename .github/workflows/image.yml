@@ -181,6 +181,7 @@ jobs:
           docker run --rm -v "$PWD:/src:ro" -w /src devtools:test
           osv-scanner scan source
           --lockfile npm/package-lock.json
+          --lockfile requirements.txt:python/copier.txt
           --lockfile requirements.txt:python/pre-commit.txt
           --lockfile requirements.txt:python/semgrep.txt
 
