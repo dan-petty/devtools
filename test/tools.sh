@@ -89,6 +89,7 @@ run weaver --version
 # uv and the Python tools
 run uv --version
 run uvx --version
+run copier --version
 run pre-commit --version
 # With no network, the version check of semgrep waits 98 s for its timeout.
 run semgrep --disable-version-check --version

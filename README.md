@@ -71,7 +71,7 @@ Tools with no `linux/arm64` build: none (2026-11-19). If a tool has no build for
 
 Each tool comes from one source. No version of a tool is copied into code: a version is only in the standard file of its source, and Renovate updates that file with a built-in manager.
 
-The rule for apt: **use apt only where sid is current.** If sid does not have a tool, or has an old version of it, mise installs the tool. On 2026-11-19, sid had gh 2.46.0 (upstream 2.105.0), kubectl 1.36.4 (1.37.2), promtool 3.5.3 (3.16.0), kustomize 5.8.1 (5.8.3) and gitleaks 8.26.0 (8.30.1).
+The rule for apt: **use apt only where sid is current.** If sid does not have a tool, or has an old version of it, a different source of the table below installs the tool: mise for a binary tool, the hashed lock of `python/` for a Python tool, and npm for a Node tool. On 2026-11-19, sid had gh 2.46.0 (upstream 2.105.0), kubectl 1.36.4 (1.37.2), promtool 3.5.3 (3.16.0), kustomize 5.8.1 (5.8.3) and gitleaks 8.26.0 (8.30.1). On 2026-11-22, sid had no copier package (upstream 9.19.1).
 
 The manifests are the lists of the tools. This README does not copy them:
 
