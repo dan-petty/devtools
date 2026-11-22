@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/dan-petty/devtools/compare/v1.0.0...v1.1.0) (2026-11-22)
+
+
+### Features
+
+* **image:** add the copier program ([#43](https://github.com/dan-petty/devtools/issues/43)) ([a8dfd73](https://github.com/dan-petty/devtools/commit/a8dfd737f25c9f21fbd66fc82a0ea8e8454ac3de))
+
 ## 1.0.0 (2026-11-22)
 
 
