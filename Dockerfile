@@ -68,6 +68,7 @@ RUN apt-get update \
        iputils-ping \
        iputils-tracepath \
        jq \
+       make \
        mtr-tiny \
        netcat-openbsd \
        nodejs \
