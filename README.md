@@ -10,18 +10,26 @@ The image is for `linux/amd64` and `linux/arm64`: one manifest list holds the tw
 
 ## Use the image
 
-Use the image as a base. Pin the digest, and add your own user:
+Use the image as a base. Pin a release tag and its digest, and add your own user:
 
 ```dockerfile
-FROM ghcr.io/dan-petty/devtools:latest@sha256:<digest>
+FROM ghcr.io/dan-petty/devtools:1.0.0@sha256:<digest>
 RUN useradd --create-home --uid 1000 --shell /bin/zsh dev
 ```
 
 Or copy one command into a different image. Each command that mise installs is a real file in `/usr/local/bin`:
 
 ```dockerfile
-COPY --from=ghcr.io/dan-petty/devtools:latest@sha256:<digest> /usr/local/bin/gh /usr/local/bin/gh
+COPY --from=ghcr.io/dan-petty/devtools:1.0.0@sha256:<digest> /usr/local/bin/gh /usr/local/bin/gh
 ```
+
+The digest is the digest of the manifest list. The line `Digest:` of this command shows it:
+
+```sh
+docker buildx imagetools inspect ghcr.io/dan-petty/devtools:1.0.0
+```
+
+Renovate keeps the pin current: it updates the digest after each daily rebuild, and the tag after each release (see [Versions](#versions)).
 
 The image sets environment variables that stop the telemetry, the update notices and the self-update of its tools: `DO_NOT_TRACK`, and the variables of OpenSpec, gh, npm, Copilot, Claude Code and Semgrep. A tool of the image gets a new version only with a new image. The `ENV` block of the last stage of the `Dockerfile` sets them, and a consumer image gets them from the base image. The build stops the install-tracking requests of mise. Copilot downloads no newer version by itself. It still writes one copy of its package for each version to `~/.cache/copilot/pkg`, when that version starts for the first time.
 
@@ -30,6 +38,23 @@ Each published image has a build provenance attestation. To verify it:
 ```sh
 gh attestation verify oci://ghcr.io/dan-petty/devtools:latest --owner dan-petty
 ```
+
+## Versions
+
+Each release has a semantic version `X.Y.Z` and the git tag `vX.Y.Z` (see [Releases](#releases)). The image of a release has 4 tags:
+
+| Tag | Example | Names |
+| --- | --- | --- |
+| `X.Y.Z` | `1.0.0` | the release |
+| `X.Y` | `1.0` | the newest release of version `X.Y` |
+| `X` | `1` | the newest release of version `X` |
+| `latest` | `latest` | the newest release |
+
+The label `org.opencontainers.image.version` of each platform image is `X.Y.Z`, and so is the annotation of the same name on the manifest list.
+
+The daily rebuild builds the newest release again with the current sid packages, and moves its 4 tags to the new digest. When a newer release comes, the tags that only the older release has do not move again. So a tag names a release, and a digest names one build of it: pin the two. Renovate gives a pin a digest update after each daily rebuild, and a version update after each release.
+
+The tags `YYYYMMDD.<run>` of the images before release `1.0.0` stay in the registry. No new image gets such a tag.
 
 ## Platforms
 
@@ -98,20 +123,26 @@ docker run --rm -v "$PWD:/src:ro" -w /src devtools:test shellcheck test/*.sh
 
 ## CI
 
-The workflow [`image.yml`](.github/workflows/image.yml) runs for each pull request, for each push to `main`, each day at 04:17 UTC, and on demand.
+The workflow [`image.yml`](.github/workflows/image.yml) runs for each pull request, for each push to `main`, for each release tag `vX.Y.Z`, each day at 04:17 UTC, and on demand. Its first job finds the release that the run publishes:
+
+- A release tag publishes the image of its commit.
+- The daily run and a manual run on `main` are the daily rebuild: they build the commit of the newest release again. Before the first release, they test `main` and publish nothing.
+- A pull request, a push to `main` and a manual run on a different branch test their commit and publish nothing.
+
+Each later job checks out the commit of the release, or the commit of the event when the run publishes nothing.
 
 The test job runs for each event, once for each platform, on a runner of that architecture. Its token cannot write packages.
 
 1. Run `test/manifests.sh`, which fails when the copy loop of the `Dockerfile` does not name a tool of `mise.toml`.
 2. On `linux/amd64` only: lint the workflows with zizmor, offline. zizmor comes from its official image at a pinned digest, because the image has no zizmor. A finding fails the job.
-3. Build the image with the docker driver of the default builder. The image goes into the image store of Docker with no export. The daily build uses `--pull --no-cache`.
+3. Build the image with the docker driver of the default builder. The image goes into the image store of Docker with no export. The daily rebuild uses `--pull --no-cache`.
 4. On `linux/amd64` only: lint each Dockerfile with hadolint, the workflows with actionlint (which also runs shellcheck on each `run` script), and `test/*.sh` with shellcheck. The three tools come from the image that the job built, so a pull request that updates one of them lints with the new version. A finding fails the job.
 5. Build `test/tools.Dockerfile`, which starts each tool once with no network and checks the state of the image.
 6. Build `test/copy-probe.Dockerfile`, which copies `gh` into `python:3.14-slim-trixie` and runs it.
 7. Scan the npm and Python lock files with osv-scanner. A finding fails the job.
 8. Scan the image with Trivy (`test/trivy.sh`), report-only. The SARIF goes to code scanning in the category `trivy-image-amd64` or `trivy-image-arm64`, and the job summary names the image size, the detected OS and the finding counts. The Trivy databases come from the cache that the newest run on `main` saved.
 
-On `main`, when the two test jobs pass, the push job runs once for each platform, on a runner of that architecture. It builds the image again with the docker-container driver, and pushes it by digest with SBOM and provenance attestations. The label `org.opencontainers.image.version` of each platform image is the version of the run, `YYYYMMDD.<run number>`, which the version job gives at the start of the run.
+For a release, when the two test jobs pass, the push job runs once for each platform, on a runner of that architecture. It builds the image again with the docker-container driver, and pushes it by digest with SBOM and provenance attestations. The label `org.opencontainers.image.version` of each platform image is the version `X.Y.Z` of the release, and the label `org.opencontainers.image.revision` is the commit of the release.
 
 Then the verify job runs once for each platform, on a runner of that architecture. It runs the image checks of the test job again on the pushed digest, because the publish job tags these bytes:
 
@@ -121,15 +152,32 @@ Then the verify job runs once for each platform, on a runner of that architectur
 
 Then the publish job:
 
-1. Stops if the version tag exists already: a tag never moves. Then makes one manifest list of the two digests with `docker buildx imagetools create`, and tags it with the version.
-2. Attests the build provenance of the manifest list.
-3. Moves `latest` to the attested manifest list, and stops if `latest` gets a different digest.
+1. Stops if the release is not the newest release, for example when a newer release came during a daily rebuild. Then no tag moves.
+2. Makes one manifest list of the two digests with `docker buildx imagetools create`, and tags it `X.Y.Z`.
+3. Attests the build provenance of the manifest list.
+4. Moves `X.Y`, `X` and `latest` to the attested manifest list, and stops if a tag gets a different digest.
 
 The manifest list has the OCI annotations of `docker/metadata-action`, such as `org.opencontainers.image.description`, `source` and `licenses`. GHCR shows the description of a multi-arch image from these annotations.
 
 The gate is on the lock files: osv-scanner fails the job on a finding in the npm and Python locks. The Trivy scan of the image is report-only (owner decision of 2026-11-19 in #1), because the Go binaries of upstream tools at their newest release hold HIGH and CRITICAL findings that no change here can fix. The daily rebuild and the Renovate updates close the alerts in code scanning. Trivy finds no OS package findings on Debian sid, because sid has no security tracker data. The owner approved this gap on 2026-11-19.
 
 An ignore of a finding that has no released fix has a reason, a tracking issue and an end date. `python/osv-scanner.toml` holds the ignores of the Python lock files.
+
+## Releases
+
+[release-please](https://github.com/googleapis/release-please) makes each release from the Conventional Commit titles of the commits on `main`. The workflow [`release.yml`](.github/workflows/release.yml) runs it on each push to `main`:
+
+1. release-please keeps one release pull request open. The pull request holds the next version in `version.txt` and `.release-please-manifest.json`, and the new entry of `CHANGELOG.md`.
+2. A person merges the release pull request. The next run creates the tag `vX.Y.Z` and its GitHub release.
+3. The tag starts `image.yml`, which publishes the image of the release (see [CI](#ci)).
+
+`release-please-config.json` holds the release type `simple`, the tag form `vX.Y.Z` and the first version, `1.0.0`. The next version comes from the commit types since the last release: `fix` gives a patch release, `feat` a minor release, and `!` or a `BREAKING CHANGE` footer a major release. A type such as `chore`, `ci`, `docs` or `test` gives no release.
+
+Renovate writes `fix(deps):` for an update of a tool or of a base image of the image (`Dockerfile`, `mise.toml`, `npm/`, `python/`), so the update gets a release. An update of a GitHub action or of a test image keeps the `chore(deps):` of the shared preset, because it does not change the image.
+
+The workflow [`pr-title.yml`](.github/workflows/pr-title.yml) checks that the title of each pull request is a Conventional Commit with a summary of at most 60 characters. The scope is optional: one of the `scope/*` labels of `.github/labels.yml`, or `main` for the release pull request. A squash merge of a pull request with one commit takes the subject of the commit, not the title of the pull request, so for such a pull request the workflow also checks the subject of the commit.
+
+The release workflow uses a token of the release App from the environment `release`: the variable `RELEASE_APP_CLIENT_ID` and the secret `RELEASE_APP_PRIVATE_KEY`. A pull request or a tag that `GITHUB_TOKEN` creates starts no workflow, but the ruleset of `main` requires the checks of `image.yml` on the release pull request, and the tag must start `image.yml`. Only `main` deploys to the environment. If a credential is missing, the first step of the job names it and stops.
 
 ## License
 
