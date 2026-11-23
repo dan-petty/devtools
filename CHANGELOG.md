@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/dan-petty/devtools/compare/v1.1.2...v1.1.3) (2026-11-23)
+
+
+### Bug Fixes
+
+* **deps:** Refresh pip-compile outputs ([#51](https://github.com/dan-petty/devtools/issues/51)) ([7f31e68](https://github.com/dan-petty/devtools/commit/7f31e68e201ed30bc01ebb45bff349ea1b5338e4))
+
 ## [1.1.2](https://github.com/dan-petty/devtools/compare/v1.1.1...v1.1.2) (2026-11-23)
 
 
