@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/dan-petty/devtools/compare/v1.1.0...v1.1.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* **deps:** update @devcontainers/cli to v0.91.0 ([#46](https://github.com/dan-petty/devtools/issues/46)) ([68f8555](https://github.com/dan-petty/devtools/commit/68f855522c2f4331396637503b214faf84f6c478))
+
 ## [1.1.0](https://github.com/dan-petty/devtools/compare/v1.0.0...v1.1.0) (2026-11-22)
 
 
