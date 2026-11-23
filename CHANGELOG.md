@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.5](https://github.com/dan-petty/devtools/compare/v1.1.4...v1.1.5) (2026-11-23)
+
+
+### Bug Fixes
+
+* **deps:** lock file maintenance ([#56](https://github.com/dan-petty/devtools/issues/56)) ([81f54c5](https://github.com/dan-petty/devtools/commit/81f54c58482e593e1912b713bcdc0c3e4a322f58))
+
 ## [1.1.4](https://github.com/dan-petty/devtools/compare/v1.1.3...v1.1.4) (2026-11-23)
 
 
