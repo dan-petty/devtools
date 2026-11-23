@@ -9,7 +9,7 @@ argo-rollouts = "1.10.2"
 argocd = "3.6.2"
 cloudflared = "2026.11.2"
 gh = "2.105.0"
-"github:agavra/tuicr" = "0.29.0"
+"github:agavra/tuicr" = "v0.30.0"
 "github:dlvhdr/gh-dash" = "4.26.3"
 # The maintained fork of actionlint, which knows the current runner labels. The registry
 # name `actionlint` is the upstream rhysd/actionlint, which has had no release since 1.7.12.
