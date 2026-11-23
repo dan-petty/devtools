@@ -7,7 +7,7 @@
 argo = "4.1.6"
 argo-rollouts = "1.10.2"
 argocd = "3.6.2"
-cloudflared = "2026.11.1"
+cloudflared = "2026.11.2"
 gh = "2.105.0"
 "github:agavra/tuicr" = "0.29.0"
 "github:dlvhdr/gh-dash" = "4.26.3"
