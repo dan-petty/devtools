@@ -30,7 +30,7 @@ jobs:
   # checks out `sha`, so the image, the tests and the labels come from one commit.
   release:
     name: Find the release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions:
       contents: read # Read the newest release.
@@ -439,7 +439,7 @@ jobs:
     name: Publish the manifest list
     needs: [release, verify]
     if: ${{ needs.release.outputs.version != '' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     permissions:
       contents: read # Read the newest release.
