@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.7](https://github.com/dan-petty/devtools/compare/v1.1.6...v1.1.7) (2026-11-23)
+
+
+### Bug Fixes
+
+* **deps:** Refresh pip-compile outputs ([#61](https://github.com/dan-petty/devtools/issues/61)) ([e3026a6](https://github.com/dan-petty/devtools/commit/e3026a64718921c0272e0369e767a950b13f4fd1))
+* **deps:** update opentofu to v1.13.10 ([#60](https://github.com/dan-petty/devtools/issues/60)) ([3152ef2](https://github.com/dan-petty/devtools/commit/3152ef26178594ba9d64b890e04702006ddf06e2))
+
 ## [1.1.6](https://github.com/dan-petty/devtools/compare/v1.1.5...v1.1.6) (2026-11-23)
 
 
