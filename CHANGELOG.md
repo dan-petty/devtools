@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.8](https://github.com/dan-petty/devtools/compare/v1.1.7...v1.1.8) (2026-11-23)
+
+
+### Bug Fixes
+
+* **deps:** Refresh pip-compile outputs ([#64](https://github.com/dan-petty/devtools/issues/64)) ([1cfa242](https://github.com/dan-petty/devtools/commit/1cfa242c8d2d3fe5a1cf932ce37d86433a7413f9))
+* **deps:** update @anthropic-ai/claude-code to v2.1.331 ([#63](https://github.com/dan-petty/devtools/issues/63)) ([7a5dc8c](https://github.com/dan-petty/devtools/commit/7a5dc8c0298323a7fbc5a0adbd5ca6e21698d420))
+
 ## [1.1.7](https://github.com/dan-petty/devtools/compare/v1.1.6...v1.1.7) (2026-11-23)
 
 
