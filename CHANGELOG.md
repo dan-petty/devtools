@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.4](https://github.com/dan-petty/devtools/compare/v1.1.3...v1.1.4) (2026-11-23)
+
+
+### Bug Fixes
+
+* **deps:** update cloudflared to v2026.11.2 ([#53](https://github.com/dan-petty/devtools/issues/53)) ([5d0f4b3](https://github.com/dan-petty/devtools/commit/5d0f4b329c938510d79b6aa461b6c5c748d82bf6))
+* **deps:** update github:agavra/tuicr to v0.30.0 ([#54](https://github.com/dan-petty/devtools/issues/54)) ([800aad6](https://github.com/dan-petty/devtools/commit/800aad6e4a36fcf5b7705c9dd65de90c45edb417))
+
 ## [1.1.3](https://github.com/dan-petty/devtools/compare/v1.1.2...v1.1.3) (2026-11-23)
 
 
