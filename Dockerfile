@@ -9,7 +9,7 @@
 # no code for one platform. A tool with no build for the platform stops the build.
 # The image has no login user: each consumer adds its own user.
 
-FROM debian:sid@sha256:e276677157e13bc51ea5b8651f54ad28883f503cc37b3e3af2c4b6cc2f4efe7b AS sid
+FROM debian:sid@sha256:06889db0e48042b40d026b4505858812e4cb29f5cf7822189bb5be6522b4bee0 AS sid
 FROM jdxcode/mise:2026.11.14@sha256:7178a0bc7eb30d5090f81237fc0a7830f57e52126b9d8df656e24547437a1e53 AS mise
 FROM ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678445e0254284eecf84db79a7d AS uv
 
