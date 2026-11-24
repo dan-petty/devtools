@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.9](https://github.com/dan-petty/devtools/compare/v1.1.8...v1.1.9) (2026-11-24)
+
+
+### Bug Fixes
+
+* **deps:** renew osv-scanner ignores until 2026-11-27 ([#69](https://github.com/dan-petty/devtools/issues/69)) ([b5e094b](https://github.com/dan-petty/devtools/commit/b5e094b930a19480bc34444ddc372fc1a60bd587))
+* **deps:** update @github/copilot to v1.0.115 ([#72](https://github.com/dan-petty/devtools/issues/72)) ([9c526eb](https://github.com/dan-petty/devtools/commit/9c526eb88268511d4e3925a7d2ef49840ca96d62))
+* **deps:** update debian:sid Docker digest to 06889db ([#67](https://github.com/dan-petty/devtools/issues/67)) ([429770c](https://github.com/dan-petty/devtools/commit/429770c5ef5d16d7a7c7c628ae10aedecbc83113))
+* **deps:** update jdxcode/mise Docker tag to v2026.11.13 ([#66](https://github.com/dan-petty/devtools/issues/66)) ([e978e1f](https://github.com/dan-petty/devtools/commit/e978e1f35491cd3e5048babfcbb2b875bfde7975))
+
 ## [1.1.8](https://github.com/dan-petty/devtools/compare/v1.1.7...v1.1.8) (2026-11-23)
 
 
