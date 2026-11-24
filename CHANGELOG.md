@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.11](https://github.com/dan-petty/devtools/compare/v1.1.10...v1.1.11) (2026-11-24)
+
+
+### Bug Fixes
+
+* **deps:** update ghcr.io/astral-sh/uv Docker tag to v0.13.10 ([#75](https://github.com/dan-petty/devtools/issues/75)) ([6ec2541](https://github.com/dan-petty/devtools/commit/6ec2541d2c865437e41114f3e6b890d7362825ed))
+
 ## [1.1.10](https://github.com/dan-petty/devtools/compare/v1.1.9...v1.1.10) (2026-11-24)
 
 
