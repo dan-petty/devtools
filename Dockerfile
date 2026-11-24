@@ -11,7 +11,7 @@
 
 FROM debian:sid@sha256:06889db0e48042b40d026b4505858812e4cb29f5cf7822189bb5be6522b4bee0 AS sid
 FROM jdxcode/mise:2026.11.14@sha256:7178a0bc7eb30d5090f81237fc0a7830f57e52126b9d8df656e24547437a1e53 AS mise
-FROM ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678445e0254284eecf84db79a7d AS uv
+FROM ghcr.io/astral-sh/uv:0.13.10@sha256:a3ea1357342c1a4bf9a0c53a3deb1b55379aefa037338d8113d5771efa01774f AS uv
 
 # The binary tools of mise.toml. `mise install --locked` downloads each tool from the URL in
 # mise.lock and checks its checksum, with the retries of the mise `http_retries` setting. The step
