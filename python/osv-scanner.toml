@@ -6,47 +6,51 @@
 # requires mcp==1.29.0. Fixed in mcp 1.30.0. Tracked in #2.
 # Renewed on 2026-11-21 to 2026-11-25: semgrep 1.186.0 is still the newest release, and the
 # develop branch of semgrep still pins mcp==1.29.0 and opentelemetry-api~=1.37.0.
+# Renewed on 2026-11-24 to 2026-11-27: semgrep 1.186.0 is still the newest release, and the
+# develop branch of semgrep still pins mcp==1.29.0, opentelemetry-api~=1.37.0 and wcmatch~=8.3.
 [[IgnoredVulns]]
 id = "GHSA-5h93-6whr-6q8j"
-effectiveUntil = 2026-11-25T00:00:00Z
+effectiveUntil = 2026-11-27T00:00:00Z
 reason = "mcp 1.29.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2)."
 
 [[IgnoredVulns]]
 id = "GHSA-84m7-p3x7-pcfv"
-effectiveUntil = 2026-11-25T00:00:00Z
+effectiveUntil = 2026-11-27T00:00:00Z
 reason = "mcp 1.29.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2)."
 
 [[IgnoredVulns]]
 id = "GHSA-rwrf-2pqf-9j8j"
-effectiveUntil = 2026-11-25T00:00:00Z
+effectiveUntil = 2026-11-27T00:00:00Z
 reason = "mcp 1.29.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2)."
 
 [[IgnoredVulns]]
 id = "GHSA-w4fh-qvv9-3v23"
-effectiveUntil = 2026-11-25T00:00:00Z
+effectiveUntil = 2026-11-27T00:00:00Z
 reason = "mcp 1.29.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2)."
 
 [[IgnoredVulns]]
 id = "GHSA-qx49-fqc8-xw99"
-effectiveUntil = 2026-11-25T00:00:00Z
+effectiveUntil = 2026-11-27T00:00:00Z
 reason = "mcp 1.29.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2). Published 2026-11-19."
 
 # semgrep 1.186.0 locks opentelemetry-api 1.37.0, because it requires
 # opentelemetry-api~=1.37.0. Fixed in 1.45.1 and 1.45.2. Tracked in #2.
 [[IgnoredVulns]]
 id = "GHSA-mf5v-w3w3-f6cg"
-effectiveUntil = 2026-11-25T00:00:00Z
+effectiveUntil = 2026-11-27T00:00:00Z
 reason = "opentelemetry-api 1.37.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2)."
 
 [[IgnoredVulns]]
 id = "GHSA-xcq7-p3pf-p88h"
-effectiveUntil = 2026-11-25T00:00:00Z
+effectiveUntil = 2026-11-27T00:00:00Z
 reason = "opentelemetry-api 1.37.0, which semgrep 1.186.0 requires; no semgrep release has the fix (#2)."
 
 # semgrep 1.186.0 locks wcmatch 8.5.2, because it requires wcmatch~=8.3 (also on its develop
 # branch, read on 2026-11-21). Fixed only in wcmatch 11.2: no 8.x release has the fix, and 8.5.2
 # is the newest 8.x release. Tracked in #2.
+# Renewed on 2026-11-24 to 2026-11-27: semgrep 1.186.0 is still the newest release, and the
+# develop branch of semgrep still pins wcmatch~=8.3.
 [[IgnoredVulns]]
 id = "GHSA-53pm-wgxf-c6qf"
-effectiveUntil = 2026-11-24T00:00:00Z
+effectiveUntil = 2026-11-27T00:00:00Z
 reason = "wcmatch 8.5.2, which semgrep 1.186.0 requires (~=8.3); no semgrep release allows the fix in 11.2 (#2). Published 2026-11-20."
