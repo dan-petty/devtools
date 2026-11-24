@@ -6,7 +6,7 @@
 [tools]
 argo = "4.1.6"
 argo-rollouts = "1.10.2"
-argocd = "3.6.2"
+argocd = "3.6.3"
 cloudflared = "2026.11.2"
 gh = "2.105.0"
 "github:agavra/tuicr" = "v0.30.0"
