@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.10](https://github.com/dan-petty/devtools/compare/v1.1.9...v1.1.10) (2026-11-24)
+
+
+### Bug Fixes
+
+* **deps:** update argocd to v3.6.3 ([#73](https://github.com/dan-petty/devtools/issues/73)) ([38dac4e](https://github.com/dan-petty/devtools/commit/38dac4e102887f27f9948fef9599f4b9f5444f37))
+
 ## [1.1.9](https://github.com/dan-petty/devtools/compare/v1.1.8...v1.1.9) (2026-11-24)
 
 
