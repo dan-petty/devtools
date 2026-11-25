@@ -168,7 +168,7 @@ An ignore of a finding that has no released fix has a reason, a tracking issue a
 [release-please](https://github.com/googleapis/release-please) makes each release from the Conventional Commit titles of the commits on `main`. The workflow [`release.yml`](.github/workflows/release.yml) runs it on each push to `main`:
 
 1. release-please keeps one release pull request open. The pull request holds the next version in `version.txt` and `.release-please-manifest.json`, and the new entry of `CHANGELOG.md`.
-2. A person merges the release pull request. The next run creates the tag `vX.Y.Z` and its GitHub release.
+2. The release workflow turns on auto-merge and requests review from `dan-petty`, and GitHub merges the pull request when its required checks pass. The next run creates the tag `vX.Y.Z` and its GitHub release.
 3. The tag starts `image.yml`, which publishes the image of the release (see [CI](#ci)).
 
 `release-please-config.json` holds the release type `simple`, the tag form `vX.Y.Z` and the first version, `1.0.0`. The next version comes from the commit types since the last release: `fix` gives a patch release, `feat` a minor release, and `!` or a `BREAKING CHANGE` footer a major release. A type such as `chore`, `ci`, `docs` or `test` gives no release.
