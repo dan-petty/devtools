@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/dan-petty/devtools/compare/v1.2.1...v1.2.2) (2026-11-25)
+
+
+### Bug Fixes
+
+* **deps:** update @github/copilot to v1.0.116 ([#87](https://github.com/dan-petty/devtools/issues/87)) ([95fe5ab](https://github.com/dan-petty/devtools/commit/95fe5ab3799172a7c5ac075ce12b411b789fdcb6))
+
 ## [1.2.1](https://github.com/dan-petty/devtools/compare/v1.2.0...v1.2.1) (2026-11-25)
 
 
