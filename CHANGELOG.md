@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/dan-petty/devtools/compare/v1.2.0...v1.2.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **deps:** update tools (patch) ([#85](https://github.com/dan-petty/devtools/issues/85)) ([fa367d3](https://github.com/dan-petty/devtools/commit/fa367d3321af194112bc6c784ef6514f4cb26011))
+
 ## [1.2.0](https://github.com/dan-petty/devtools/compare/v1.1.13...v1.2.0) (2026-11-25)
 
 
