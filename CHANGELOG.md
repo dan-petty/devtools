@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.12](https://github.com/dan-petty/devtools/compare/v1.1.11...v1.1.12) (2026-11-25)
+
+
+### Bug Fixes
+
+* **deps:** update @anthropic-ai/claude-code to v2.1.332 ([#77](https://github.com/dan-petty/devtools/issues/77)) ([3212f77](https://github.com/dan-petty/devtools/commit/3212f77845e6f29d7f632ef5638051d0ec3e21f0))
+
 ## [1.1.11](https://github.com/dan-petty/devtools/compare/v1.1.10...v1.1.11) (2026-11-24)
 
 
