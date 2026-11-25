@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/dan-petty/devtools/compare/v1.1.13...v1.2.0) (2026-11-25)
+
+
+### Features
+
+* **ci:** enable auto-merge and reviewer on release PRs ([#84](https://github.com/dan-petty/devtools/issues/84)) ([546f2a1](https://github.com/dan-petty/devtools/commit/546f2a1c0d0d3975bcdee6f9d88f64ac925d5102)), closes [#83](https://github.com/dan-petty/devtools/issues/83)
+
+
+### Bug Fixes
+
+* **deps:** update pluto to v5.24.6 ([#81](https://github.com/dan-petty/devtools/issues/81)) ([de8b759](https://github.com/dan-petty/devtools/commit/de8b7595b5751b487153c658115ebd5fa9fcd361))
+
 ## [1.1.13](https://github.com/dan-petty/devtools/compare/v1.1.12...v1.1.13) (2026-11-25)
 
 
