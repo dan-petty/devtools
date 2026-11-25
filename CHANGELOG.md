@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.13](https://github.com/dan-petty/devtools/compare/v1.1.12...v1.1.13) (2026-11-25)
+
+
+### Bug Fixes
+
+* **deps:** update tools ([#79](https://github.com/dan-petty/devtools/issues/79)) ([3f24c51](https://github.com/dan-petty/devtools/commit/3f24c513a25485273c8a7a4010073ccdfc9ea4cb))
+
 ## [1.1.12](https://github.com/dan-petty/devtools/compare/v1.1.11...v1.1.12) (2026-11-25)
 
 
