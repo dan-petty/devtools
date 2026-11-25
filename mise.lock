@@ -352,20 +352,20 @@ url = "https://github.com/google/osv-scanner/releases/download/v2.7.1/osv-scanne
 url_api = "https://api.github.com/repos/google/osv-scanner/releases/assets/726165286"
 
 [[tools.pluto]]
-version = "5.24.5"
+version = "5.24.6"
 backend = "aqua:FairwindsOps/pluto"
-specifiers = ["5.24.5"]
+specifiers = ["5.24.6"]
 
 [tools.pluto."platforms.linux-arm64"]
-checksum = "sha256:2b00f52285f0298ae7cec55d34e2387ed725584d072e67c8fa88bee662169f10"
-url = "https://github.com/FairwindsOps/pluto/releases/download/v5.24.5/pluto_5.24.5_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/FairwindsOps/pluto/releases/assets/706695058"
+checksum = "sha256:6e6bc150cf89ca4b10003c24fe01bb3f3dcc9babe9fe370da14003444c194898"
+url = "https://github.com/FairwindsOps/pluto/releases/download/v5.24.6/pluto_5.24.6_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/FairwindsOps/pluto/releases/assets/791634945"
 provenance = "cosign"
 
 [tools.pluto."platforms.linux-x64"]
-checksum = "sha256:80076e01a320e1f4db30f5dbc927d204e61cd8abed66fa0b4644ca61cd86b39e"
-url = "https://github.com/FairwindsOps/pluto/releases/download/v5.24.5/pluto_5.24.5_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/FairwindsOps/pluto/releases/assets/706694977"
+checksum = "sha256:e0c9517bb6fd3c7d5062432e538593195c7f73a477736a5f48760f171cc4b78e"
+url = "https://github.com/FairwindsOps/pluto/releases/download/v5.24.6/pluto_5.24.6_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/FairwindsOps/pluto/releases/assets/791635068"
 provenance = "cosign"
 
 [[tools.popeye]]
