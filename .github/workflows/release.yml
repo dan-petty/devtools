@@ -2,9 +2,10 @@ name: Release
 
 # release-please makes each release of the image (README.md, "Releases"). On each push to main it
 # opens or updates one release pull request, which holds the next version in version.txt and
-# .release-please-manifest.json, and the new entry of CHANGELOG.md. When a person merges that pull
-# request, the next run creates the tag vX.Y.Z and its GitHub release. The tag starts image.yml,
-# which publishes the image of the release.
+# .release-please-manifest.json, and the new entry of CHANGELOG.md. The workflow turns on
+# auto-merge and requests review from dan-petty on that pull request, and GitHub merges it when its
+# required checks pass. The next run creates the tag vX.Y.Z and its GitHub release. The tag starts
+# image.yml, which publishes the image of the release.
 on:
   push:
     branches:
@@ -68,8 +69,34 @@ jobs:
           permission-pull-requests: write
 
       - name: Run release-please
+        id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ steps.app.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      - name: Enable auto-merge and request review on the release pull request
+        if: >-
+          steps.release.outputs.releases_created != 'true' &&
+          (steps.release.outputs.pr != '' || steps.release.outputs.prs != '')
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_PR: ${{ steps.release.outputs.pr }}
+          RELEASE_PRS: ${{ steps.release.outputs.prs }}
+          REVIEWER: dan-petty
+        run: |
+          numbers=$(echo "$RELEASE_PRS" | jq -r '.[].number // empty' 2>/dev/null || true)
+          if [ -z "$numbers" ]; then
+            numbers=$(echo "$RELEASE_PR" | jq -r '.number // empty' 2>/dev/null || true)
+          fi
+          for num in $numbers; do
+            gh pr merge "$num" --repo "$REPOSITORY" --auto --squash
+            pull_json=$(gh api "repos/$REPOSITORY/pulls/$num")
+            if jq -e --arg r "$REVIEWER" \
+              '(.user.login != $r) and (([.requested_reviewers[]?.login] | index($r)) == null)' \
+              <<<"$pull_json" >/dev/null; then
+              gh api "repos/$REPOSITORY/pulls/$num/requested_reviewers" -f "reviewers[]=$REVIEWER" >/dev/null
+            fi
+          done
