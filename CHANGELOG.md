@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/dan-petty/devtools/compare/v1.3.0...v1.3.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **deps:** Refresh pip-compile outputs ([#101](https://github.com/dan-petty/devtools/issues/101)) ([19068e5](https://github.com/dan-petty/devtools/commit/19068e53d9c11697b5738123ab99014292adb1fe))
+* **deps:** update vale to v3.29.0 ([#100](https://github.com/dan-petty/devtools/issues/100)) ([d25947c](https://github.com/dan-petty/devtools/commit/d25947c3e9e22feb1f8d491890f7eb2ce0fd14ac))
+
 ## [1.3.0](https://github.com/dan-petty/devtools/compare/v1.2.4...v1.3.0) (2026-11-26)
 
 
