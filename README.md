@@ -31,7 +31,7 @@ docker buildx imagetools inspect ghcr.io/dan-petty/devtools:1.0.0
 
 Renovate keeps the pin current: it updates the digest after each daily rebuild, and the tag after each release (see [Versions](#versions)).
 
-The image sets environment variables that stop the telemetry, the update notices and the self-update of its tools: `DO_NOT_TRACK`, and the variables of OpenSpec, gh, npm, Copilot, Claude Code and Semgrep. A tool of the image gets a new version only with a new image. The `ENV` block of the last stage of the `Dockerfile` sets them, and a consumer image gets them from the base image. The build stops the install-tracking requests of mise. Copilot downloads no newer version by itself. It still writes one copy of its package for each version to `~/.cache/copilot/pkg`, when that version starts for the first time.
+The image sets environment variables that stop the telemetry, the update notices and the self-update of its tools: `DO_NOT_TRACK`, and the variables of OpenSpec, gh, npm, Copilot, Claude Code, mise and Semgrep. A tool of the image gets a new version only with a new image. The `ENV` block of the last stage of the `Dockerfile` sets them, and a consumer image gets them from the base image. `MISE_USE_VERSIONS_HOST_TRACK=0` stops the install report that mise sends for each tool that it installs, in the build and for each user of the image. `mise self-update` is off: the file `/usr/local/lib/mise/mise-self-update-instructions.toml` tells mise that the image installs it. Copilot downloads no newer version by itself. It still writes one copy of its package for each version to `~/.cache/copilot/pkg`, when that version starts for the first time.
 
 Each published image has a build provenance attestation. To verify it:
 
@@ -79,13 +79,14 @@ The manifests are the lists of the tools. This README does not copy them:
 | --- | --- | --- |
 | apt (Debian sid) | the apt step of the `Dockerfile`; the packages float with sid | the daily rebuild |
 | mise | `mise.toml`, `mise.lock` | Renovate `mise` |
+| mise image | the `FROM` line of the mise image in the `Dockerfile` | Renovate `dockerfile` |
 | uv image | the `FROM` line of the uv image in the `Dockerfile` | Renovate `dockerfile` |
 | uv, hashed lock | `python/<tool>.in`, `python/<tool>.txt` | Renovate `pip-compile` |
 | npm | `npm/package.json`, `npm/package-lock.json` | Renovate `npm` |
 
 `test/tools.sh` runs each command of the image. Podman takes the place of Docker. The image has no Docker engine.
 
-`mise.lock` holds the download URL and the sha256 checksum of each mise tool for `linux-x64` and `linux-arm64`. The build runs `mise install --locked`, which refuses a tool that has no locked URL. The copy loop of the `Dockerfile` copies each command of a mise tool, and `test/manifests.sh` fails when the loop does not name a tool of `mise.toml`. mise comes from its official image at a pinned digest, and only the build uses it: the image has no mise command. uv and uvx come from their official image at a pinned digest: the last stage copies them into `/usr/local/bin` with `COPY --from`.
+`mise.lock` holds the download URL and the sha256 checksum of each mise tool for `linux-x64` and `linux-arm64`. The build runs `mise install --locked`, which refuses a tool that has no locked URL. The copy loop of the `Dockerfile` copies each command of a mise tool, and `test/manifests.sh` fails when the loop does not name a tool of `mise.toml`. mise, uv and uvx come from their official images at a pinned digest: the last stage copies them into `/usr/local/bin` with `COPY --from`. The build uses that mise, and the image has it for the repositories that pin their tools in a `mise.toml` of their own: `mise install --locked` and `mise exec` of such a repository need only the `mise` command from the image. The image does not activate mise in a shell, so mise changes no `PATH`.
 
 Each Python tool has a virtual environment of its own in `/usr/local/lib/devtools`. `uv pip sync --require-hashes` refuses a distribution that the lock file does not name with its hash. The lock files of `python/` are universal: they hold the hash of the wheel of each platform.
 
@@ -119,7 +120,7 @@ docker run --rm -v "$PWD:/src:ro" -w /src devtools:test actionlint
 docker run --rm -v "$PWD:/src:ro" -w /src devtools:test shellcheck test/*.sh
 ```
 
-`test/manifests.sh` checks that the copy loop of the `Dockerfile` and `mise.toml` name the same commands. `test/tools.Dockerfile` runs `test/tools.sh` in the image with no network. Each tool prints its version once, and each command has a timeout of 60 s. Then the script checks the state of the image: apt marks the dependencies as automatic, the image has no `mise` command, and no lock file of `/usr/local/lib/devtools` is writable by all users.
+`test/manifests.sh` checks that the copy loop of the `Dockerfile` and `mise.toml` name the same commands. `test/tools.Dockerfile` runs `test/tools.sh` in the image with no network. Each tool prints its version once, and each command has a timeout of 60 s. Then the script checks the state of the image: apt marks the dependencies as automatic, mise cannot update itself and sends no install report, and no lock file of `/usr/local/lib/devtools` is writable by all users.
 
 ## CI
 
