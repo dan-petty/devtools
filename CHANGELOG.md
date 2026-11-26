@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.4](https://github.com/dan-petty/devtools/compare/v1.2.3...v1.2.4) (2026-11-26)
+
+
+### Bug Fixes
+
+* **image:** give the image the mise command ([#92](https://github.com/dan-petty/devtools/issues/92)) ([cf95ec9](https://github.com/dan-petty/devtools/commit/cf95ec9a8e351f197cc2544abea33460ee6274fb)), closes [#90](https://github.com/dan-petty/devtools/issues/90)
+
 ## [1.2.3](https://github.com/dan-petty/devtools/compare/v1.2.2...v1.2.3) (2026-11-26)
 
 
