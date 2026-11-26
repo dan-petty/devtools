@@ -86,7 +86,8 @@ run tuicr --version
 run vale --version
 run weaver --version
 
-# uv and the Python tools
+# mise, uv and uvx, each from its official image
+run mise --version
 run uv --version
 run uvx --version
 run copier --version
@@ -114,10 +115,20 @@ if [ "$automatic" -le 100 ]; then
 fi
 run apt-get --simulate autoremove
 
-# mise is a tool of the build only.
-echo "+ ! command -v mise"
-if command -v mise; then
-  echo "FAIL: mise is in the image" >&2
+# mise gets a new version only with a new image, and it sends no install report. `mise doctor`
+# exits with a status that is not 0 when it has a warning, so the test reads only its report.
+echo "+ mise doctor | grep self_update_available"
+self_update=$(timeout --kill-after=5s 60s mise doctor 2>&1 | grep '^self_update_available:' || true)
+echo "$self_update"
+if [ "$self_update" != "self_update_available: no" ]; then
+  echo "FAIL: mise can update itself in the image" >&2
+  exit 1
+fi
+echo "+ mise settings get use_versions_host_track"
+track=$(timeout --kill-after=5s 60s mise settings get use_versions_host_track)
+echo "$track"
+if [ "$track" != "false" ]; then
+  echo "FAIL: mise sends an install report: MISE_USE_VERSIONS_HOST_TRACK is '${MISE_USE_VERSIONS_HOST_TRACK-}'" >&2
   exit 1
 fi
 

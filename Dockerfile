@@ -2,11 +2,11 @@
 # check=error=true
 
 # The devtools image: Debian sid with the development tools of devops-cli. Each tool comes from one
-# source, and README.md names it: apt for a tool that sid has at a current version, the uv image
-# for uv and uvx, mise.lock for each other binary tool, the hashed requirement files of python/ for
-# the Python tools, and npm/package-lock.json for the Node tools. Only the build uses mise: the
-# image has no mise command. The image is for linux/amd64 and linux/arm64, and the Dockerfile has
-# no code for one platform. A tool with no build for the platform stops the build.
+# source, and README.md names it: apt for a tool that sid has at a current version, the mise image
+# for mise, the uv image for uv and uvx, mise.lock for each other binary tool, the hashed
+# requirement files of python/ for the Python tools, and npm/package-lock.json for the Node tools.
+# The image is for linux/amd64 and linux/arm64, and the Dockerfile has no code for one platform. A
+# tool with no build for the platform stops the build.
 # The image has no login user: each consumer adds its own user.
 
 FROM debian:sid@sha256:06889db0e48042b40d026b4505858812e4cb29f5cf7822189bb5be6522b4bee0 AS sid
@@ -19,7 +19,7 @@ FROM ghcr.io/astral-sh/uv:0.13.10@sha256:a3ea1357342c1a4bf9a0c53a3deb1b55379aefa
 # An archive can hold more than its command (prometheus beside promtool), so the step copies the
 # commands by name, and test/manifests.sh checks that the loop names each tool of mise.toml.
 # The step makes no GitHub API request, so it gets no credential. The step mounts mise from the
-# mise image, so that no layer has mise.
+# mise image.
 FROM sid AS mise-tools
 COPY --from=mise /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 WORKDIR /src
@@ -123,7 +123,8 @@ RUN --mount=type=cache,target=/root/.npm \
 
 FROM base AS devtools
 # The settings of the tools for each consumer image: no telemetry, no update notice and no
-# self-update. A tool of the image gets a new version only with a new image.
+# self-update. A tool of the image gets a new version only with a new image. DO_NOT_TRACK does not
+# stop the install report of mise; MISE_USE_VERSIONS_HOST_TRACK=0 stops it.
 ENV DO_NOT_TRACK=1 \
     OPENSPEC_TELEMETRY=0 \
     OPENSPEC_NO_UPDATE_CHECK=1 \
@@ -131,9 +132,19 @@ ENV DO_NOT_TRACK=1 \
     npm_config_update_notifier=false \
     COPILOT_AUTO_UPDATE=false \
     DISABLE_AUTOUPDATER=1 \
+    MISE_USE_VERSIONS_HOST_TRACK=0 \
+    MISE_DISABLE_UPDATE_WARNING=1 \
     SEMGREP_SEND_METRICS=off \
     SEMGREP_ENABLE_VERSION_CHECK=0
 COPY --from=uv /uv /uvx /usr/local/bin/
+# mise is the tool installer of the repositories that pin their tools in a mise.toml. It is a
+# static binary. mise reads the instructions file below from the lib folder of its prefix: the
+# file turns off `mise self-update` for each user, and mise prints its message in place of the
+# update.
+COPY --from=mise /usr/local/bin/mise /usr/local/bin/mise
+RUN mkdir /usr/local/lib/mise \
+    && printf 'message = "The devtools image installs mise. To get a newer mise, use a newer image."\n' \
+       > /usr/local/lib/mise/mise-self-update-instructions.toml
 COPY --from=mise-tools /out/bin/ /usr/local/bin/
 COPY --from=python-tools /usr/local/lib/devtools/ /usr/local/lib/devtools/
 COPY --from=npm-tools /usr/local/lib/devtools/npm/ /usr/local/lib/devtools/npm/
