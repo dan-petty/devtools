@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/dan-petty/devtools/compare/v1.2.4...v1.3.0) (2026-11-26)
+
+
+### Features
+
+* **image:** add Python 3.15 ([#95](https://github.com/dan-petty/devtools/issues/95)) ([16f81d6](https://github.com/dan-petty/devtools/commit/16f81d6082b16852f26b5595c9b5dacc66f1fdaa)), closes [#94](https://github.com/dan-petty/devtools/issues/94)
+
 ## [1.2.4](https://github.com/dan-petty/devtools/compare/v1.2.3...v1.2.4) (2026-11-26)
 
 
