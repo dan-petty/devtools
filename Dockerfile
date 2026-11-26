@@ -78,6 +78,7 @@ RUN apt-get update \
        python-is-python3 \
        python3-ansible-runner \
        python3.14 \
+       python3.15 \
        shellcheck \
        skopeo \
        socat \
