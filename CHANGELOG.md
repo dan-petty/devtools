@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.3](https://github.com/dan-petty/devtools/compare/v1.2.2...v1.2.3) (2026-11-26)
+
+
+### Bug Fixes
+
+* **deps:** update gh to v2.106.0 ([#89](https://github.com/dan-petty/devtools/issues/89)) ([e59832e](https://github.com/dan-petty/devtools/commit/e59832e0be78a34996440e07b55fccd209e52952))
+
 ## [1.2.2](https://github.com/dan-petty/devtools/compare/v1.2.1...v1.2.2) (2026-11-25)
 
 
