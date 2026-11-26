@@ -38,6 +38,7 @@ run ping -V
 run podman --version
 run python --version
 run python3.14 --version
+run python3.15 --version
 run shellcheck --version
 run skopeo --version
 run socat -V
