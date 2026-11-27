@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/dan-petty/devtools/compare/v1.3.4...v1.4.0) (2026-11-27)
+
+
+### Features
+
+* **image:** add ansible-lint ([#112](https://github.com/dan-petty/devtools/issues/112)) ([d7517c5](https://github.com/dan-petty/devtools/commit/d7517c59f0e2919cf66b5f5e2ccd0b6b7be3d171))
+
 ## [1.3.4](https://github.com/dan-petty/devtools/compare/v1.3.3...v1.3.4) (2026-11-27)
 
 
