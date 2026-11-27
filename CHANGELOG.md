@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.3](https://github.com/dan-petty/devtools/compare/v1.3.2...v1.3.3) (2026-11-27)
+
+
+### Bug Fixes
+
+* **ci:** show the package description on the GHCR page ([#107](https://github.com/dan-petty/devtools/issues/107)) ([259864e](https://github.com/dan-petty/devtools/commit/259864e2663829fde6acc56e20ef335efe52c66c))
+
 ## [1.3.2](https://github.com/dan-petty/devtools/compare/v1.3.1...v1.3.2) (2026-11-27)
 
 
