@@ -5,7 +5,7 @@
     "@anthropic-ai/claude-code": "2.1.332",
     "@devcontainers/cli": "0.91.0",
     "@fission-ai/openspec": "2.2.0",
-    "@github/copilot": "1.0.116",
+    "@github/copilot": "1.0.117",
     "style-dictionary": "5.8.0"
   },
   "overrides": {
