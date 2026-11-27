@@ -1,16 +1,11 @@
 name: PR Title
 
-# release-please reads the title of each commit on main as a Conventional Commit, and drops a
-# title that it cannot parse with no warning (README.md, "Releases"). So this workflow checks the
-# title of each pull request into main. The squash commit of a pull request with more than one
-# commit gets the title of the pull request; that of a pull request with one commit gets the
-# subject of the commit (squash_merge_commit_title COMMIT_OR_PR_TITLE). So validateSingleCommit
-# also checks the subject of the commit of a pull request with one commit. The subject can differ
-# from the title: a Renovate group title adds "(minor)", which the commit does not have. The title
-# is also the line of the changelog, so its summary has at most 60 characters. The action compares
-# subjectPattern with the summary only.
-# The scope is optional. A scope is one of the scope/* labels of .github/labels.yml, or `main`,
-# the scope of the release pull request of release-please.
+# release-please reads the title of each squash commit on main as a Conventional Commit, so the
+# reusable workflow pr-title.yml of infra checks the title of each pull request into main. A scope
+# is one of the scope/* labels of .github/labels.yml, or main, the scope of the release pull request.
+# The caller pins the commit of the release tag of infra that rendered this file, with the tag in a
+# comment: the form of a digest pin of the github-actions manager of Renovate. Only `copier update`
+# changes both: Renovate leaves this pin to the template.
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
@@ -19,35 +14,10 @@ on:
 
 permissions: {}
 
-# A new edit or push cancels the check of the older title.
-concurrency:
-  group: pr-title-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
 jobs:
-  semantic-title:
-    name: Semantic PR title
-    runs-on: ubuntu-26.04
-    timeout-minutes: 5
+  pr-title:
+    name: PR title
+    uses: dan-petty/infra/.github/workflows/pr-title.yml@87e9715c216102c1c443347e28ffbbb606656231 # v0.25.3
     permissions:
-      pull-requests: read # Read the title of the pull request.
-
-    steps:
-      - name: Check that the title is a Conventional Commit
-        uses: amannn/action-semantic-pull-request@66e72920af32222769c386d81f89656ebcb6d6d5 # v6.1.4
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          scopes: |
-            ci
-            deps
-            docs
-            image
-            infra
-            main
-            security
-          validateSingleCommit: true
-          subjectPattern: ^.{1,60}$
-          subjectPatternError: >-
-            The summary after "<type>(<scope>): " has more than 60 characters. Shorten it to 60
-            characters or fewer.
+      contents: read # Read .github/labels.yml.
+      pull-requests: read # Read the title and the commits of the pull request.

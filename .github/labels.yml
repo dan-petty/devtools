@@ -1,11 +1,10 @@
-# The labels of this repository only (devops-cli `devops roadmap onboard`, docs/roadmap/onboard.md).
-# The workflow labels come from devops-cli (src/devops_cli/roadmap/workflow_labels.py).
-# Intake gives an issue the scope/* label of its Conventional Commit scope. Each scope/* label is
-# gray (DCDCD6), as in devops-cli (docs/DESIGN.md: one color for each label family).
-
-- name: "scope/image"
-  color: "DCDCD6"
-  description: "The Dockerfile, the image layers and the tool test"
+# The labels of this repository only. `devops repos onboard` adds each label that is missing on
+# GitHub. The workflow labels, such as type/* and status/*, come from devops-cli. Intake gives an
+# issue the scope/* label of its Conventional Commit scope, and the PR title check accepts each
+# scope of this file. In every repository it also accepts ci, deps, docs, main and spec, with or
+# without a label. Each scope/* label is gray (DCDCD6), as in devops-cli. The template writes this
+# file from the answers scopes and scope_descriptions: change a scope or its description with
+# `copier update --data scopes=<scopes>` or `--data scope_descriptions=<mapping>`, not here.
 
 - name: "scope/ci"
   color: "DCDCD6"
@@ -15,6 +14,14 @@
   color: "DCDCD6"
   description: "Tool versions: mise.toml, mise.lock, the npm and uv locks, and Renovate"
 
+- name: "scope/docs"
+  color: "DCDCD6"
+  description: "README and other documents"
+
+- name: "scope/image"
+  color: "DCDCD6"
+  description: "The Dockerfile, the image layers and the tool test"
+
 - name: "scope/infra"
   color: "DCDCD6"
   description: "Base images of the Dockerfile that Renovate updates"
@@ -23,11 +30,7 @@
   color: "DCDCD6"
   description: "Scanner findings, ignore entries and the security policy of the image"
 
-- name: "scope/docs"
-  color: "DCDCD6"
-  description: "README and other documents"
-
-# release-please finds its release pull request by these labels (release.yml).
+# release-please finds its release pull request by these labels.
 - name: "autorelease: pending"
   color: "DCDCD6"
   description: "The release pull request that release-please keeps open"

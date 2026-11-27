@@ -1,11 +1,16 @@
 name: Release
 
-# release-please makes each release of the image (README.md, "Releases"). On each push to main it
-# opens or updates one release pull request, which holds the next version in version.txt and
-# .release-please-manifest.json, and the new entry of CHANGELOG.md. The workflow turns on
-# auto-merge and requests review from dan-petty on that pull request, and GitHub merges it when its
-# required checks pass. The next run creates the tag vX.Y.Z and its GitHub release. The tag starts
-# image.yml, which publishes the image of the release.
+# release-please makes each release of this repository. On each push to main, the reusable workflow
+# release.yml of infra opens or updates one release pull request and turns on auto-merge. When it
+# merges after its checks pass, the next run creates the tag vX.Y.Z and its GitHub release. Its job
+# runs in the environment release, which holds the variable RELEASE_APP_CLIENT_ID and the secret
+# RELEASE_APP_PRIVATE_KEY of the release App, and only main deploys to it (github/repository.yaml).
+# The repository holds no secret of its own.
+# The caller must pass the secret by name, and the job gets the value of the secret of the
+# environment. The caller passes no other secret: no `secrets: inherit`.
+# The caller pins the commit of the release tag of infra that rendered this file, with the tag in a
+# comment: the form of a digest pin of the github-actions manager of Renovate. Only `copier update`
+# changes both: Renovate leaves this pin to the template.
 on:
   push:
     branches:
@@ -14,89 +19,14 @@ on:
 permissions: {}
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release
   cancel-in-progress: false
 
 jobs:
-  release-please:
-    name: Release Please
-    runs-on: ubuntu-26.04
-    timeout-minutes: 10
-    # The token of the release App opens the release pull request and creates the release tag, so
-    # the checks of image.yml run on the pull request and the tag starts image.yml. A pull request
-    # or a tag that GITHUB_TOKEN creates starts no workflow, and the ruleset of main requires the
-    # checks. The environment release holds the credentials of the App, and only main deploys to
-    # it (devops-cli ADR 0032).
-    environment: release
+  release:
+    name: Release
+    uses: dan-petty/infra/.github/workflows/release.yml@87e9715c216102c1c443347e28ffbbb606656231 # v0.25.3
+    # The token of the release App writes the release; the job token gets no permission.
     permissions: {}
-
-    steps:
-      # Without the credentials, the next step stops with a message that does not name the
-      # environment. This step names each missing credential and stops the job.
-      - name: Check the credentials of the release App
-        env:
-          HAS_CLIENT_ID: ${{ vars.RELEASE_APP_CLIENT_ID != '' }}
-          HAS_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY != '' }}
-        run: |
-          missing=""
-          if [ "$HAS_CLIENT_ID" != true ]; then
-            missing="no variable RELEASE_APP_CLIENT_ID"
-          fi
-          if [ "$HAS_PRIVATE_KEY" != true ]; then
-            missing="${missing:+$missing and }no secret RELEASE_APP_PRIVATE_KEY"
-          fi
-          credentials="the variable RELEASE_APP_CLIENT_ID and the secret RELEASE_APP_PRIVATE_KEY"
-          if [ -n "$missing" ]; then
-            message="The environment release of $GITHUB_REPOSITORY has $missing. A repository admin adds"
-            message="$message $credentials of the release App to the environment release, and then"
-            message="$message runs this job again."
-            echo "::error title=Release credentials missing::$message"
-            printf '> [!CAUTION]\n> %s\n' "$message" >>"$GITHUB_STEP_SUMMARY"
-            exit 1
-          fi
-          echo "The environment release holds $credentials."
-
-      - name: Mint the token of the release App
-        id: app
-        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
-        with:
-          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          # The token gets only what release-please-action documents: the release pull request,
-          # its labels, the CHANGELOG.md and version commits, the tag and the GitHub release.
-          permission-contents: write
-          permission-issues: write
-          permission-pull-requests: write
-
-      - name: Run release-please
-        id: release
-        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
-        with:
-          token: ${{ steps.app.outputs.token }}
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
-
-      - name: Enable auto-merge and request review on the release pull request
-        if: >-
-          steps.release.outputs.releases_created != 'true' &&
-          (steps.release.outputs.pr != '' || steps.release.outputs.prs != '')
-        env:
-          GH_TOKEN: ${{ steps.app.outputs.token }}
-          REPOSITORY: ${{ github.repository }}
-          RELEASE_PR: ${{ steps.release.outputs.pr }}
-          RELEASE_PRS: ${{ steps.release.outputs.prs }}
-          REVIEWER: dan-petty
-        run: |
-          numbers=$(echo "$RELEASE_PRS" | jq -r '.[].number // empty' 2>/dev/null || true)
-          if [ -z "$numbers" ]; then
-            numbers=$(echo "$RELEASE_PR" | jq -r '.number // empty' 2>/dev/null || true)
-          fi
-          for num in $numbers; do
-            gh pr merge "$num" --repo "$REPOSITORY" --auto --squash
-            pull_json=$(gh api "repos/$REPOSITORY/pulls/$num")
-            if jq -e --arg r "$REVIEWER" \
-              '(.user.login != $r) and (([.requested_reviewers[]?.login] | index($r)) == null)' \
-              <<<"$pull_json" >/dev/null; then
-              gh api "repos/$REPOSITORY/pulls/$num/requested_reviewers" -f "reviewers[]=$REVIEWER" >/dev/null
-            fi
-          done
+    secrets:
+      RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
