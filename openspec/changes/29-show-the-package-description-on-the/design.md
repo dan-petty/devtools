@@ -2,12 +2,13 @@
 
 ## Decisions
 
-- **Find where GHCR reads the description of a multi-arch package that has an in-registry attestation from the GitHub documentation of the Container registry, and record the answer in `README.md`.**: The documentation is one of the two sources that the issue names, it needs no second repository or package permission, and the repository already follows it at README.md:163.
+- **Take the live package page as the evidence of where the description comes from.**: The page shows the referrers index `sha256-<digest>` as Latest and shows no description, while the tagged manifest list carries the annotation; the documentation names the index annotation but not the version that the page shows.
 - **Copy the attestation referrers index with docker buildx imagetools create and its `--annotation` flags.**: The referrers index is the package version that the page marks as the newest, so the copy gives that version the description while the attested manifest list digest stays unchanged; buildx already runs in the publish job.
 - **Reuse the annotation values of the metadata-action annotations output for both indexes.**: One source of values: the description of the referrers index matches the manifest list by construction and no literal is duplicated.
-- **Place the new step after the attest step and before the tag moves.**: The referrers tag exists only after the attestation pushes it, and the tags X.Y, X and `latest` move only after the referrers index carries the description.
-- **Compare the manifest digests and the description before and after the copy in the new step, and fail the publish job on a difference.**: A copy that drops an attestation manifest or loses the annotation fails the run instead of changing the registry silently.
-- **Check the package page after the next publish on `main`, and record that check in `README.md`.**: The issue records the newest-version cause as unproven, so the real page is the only proof of the display; the check needs no extra repository, token or permission.
+- **Place the new step after the tag step and before `Show the manifest list`.**: The referrers tag exists only after the attestation pushes it, and a failure of the new step must not stop the tags X.Y, X and `latest` from moving to the attested manifest list.
+- **Compare the whole `manifests` array and the description before and after the copy, and fail the publish job on a difference.**: `docker buildx imagetools create` builds a new index from the descriptors of its source, so a dropped `artifactType` or annotation of a descriptor would hide the attestation from a client that filters by artifact type; a digest check alone would not see that.
+- **Check the registry attestation with `gh attestation verify --bundle-from-oci`.**: Without the flag, the command reads the attestation from the GitHub API, so it would pass even when the copy broke the referrers index.
+- **Check the package page after the next publish on `main`, and record that check in `README.md`.**: The display on the real page is the proof that the issue asks for; the check needs no extra repository, token or permission.
 
 ## Rejected alternatives
 
@@ -18,4 +19,4 @@
 - **Add only the description annotation to the referrers index.**: The index annotations come from one output at .github/workflows/image.yml:511: `ANNOTATIONS: ${{ steps.meta.outputs.annotations }}`, so a second source for the description drifts from the manifest list.
 - **Hard-code the description in the step.**: The values come from metadata-action, as README.md:163: `GHCR shows the description of a multi-arch image from these annotations.` records; a literal in the workflow is a second source of truth.
 - **Publish a test package in a scratch repository to find where GHCR reads the description.**: The publish job names one image at .github/workflows/image.yml:525: `subject-name: ${{ env.IMAGE }}`, so a scratch package needs a second repository and its own package permissions, and its page can behave differently from the page of this package.
-- **Take the GitHub documentation as the proof that the page shows the description, with no check of the page.**: The issue records that the page shows no description while the manifest list carries the annotation at .github/workflows/image.yml:487: `GHCR reads the description of a multi-arch image from`, so the documentation alone proves nothing about this package.
+- **Take the GitHub documentation as the proof that the page shows the description, with no check of the page.**: The manifest list already carries the annotation that the documentation names, and the page shows no description, so the documentation alone proves nothing about this package.
