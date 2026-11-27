@@ -71,7 +71,7 @@ Tools with no `linux/arm64` build: none (2026-11-19). If a tool has no build for
 
 Each tool comes from one source. No version of a tool is copied into code: a version is only in the standard file of its source, and Renovate updates that file with a built-in manager.
 
-The rule for apt: **use apt only where sid is current.** If sid does not have a tool, or has an old version of it, a different source of the table below installs the tool: mise for a binary tool, the hashed lock of `python/` for a Python tool, and npm for a Node tool. On 2026-11-19, sid had gh 2.46.0 (upstream 2.105.0), kubectl 1.36.4 (1.37.2), promtool 3.5.3 (3.16.0), kustomize 5.8.1 (5.8.3) and gitleaks 8.26.0 (8.30.1). On 2026-11-22, sid had no copier package (upstream 9.19.1).
+The rule for apt: **use apt only where sid is current.** If sid does not have a tool, or has an old version of it, a different source of the table below installs the tool: mise for a binary tool, the hashed lock of `python/` for a Python tool, and npm for a Node tool. On 2026-11-19, sid had gh 2.46.0 (upstream 2.105.0), kubectl 1.36.4 (1.37.2), promtool 3.5.3 (3.16.0), kustomize 5.8.1 (5.8.3) and gitleaks 8.26.0 (8.30.1). On 2026-11-22, sid had no copier package (upstream 9.19.1). On 2026-11-27, sid had ansible-lint 26.4.0 (upstream 26.11.1).
 
 The manifests are the lists of the tools. This README does not copy them:
 
@@ -98,7 +98,7 @@ The Node tools are in `/usr/local/lib/devtools/npm`. `npm ci --ignore-scripts` c
 
 - **apt**: add the package to the apt step of the `Dockerfile` only if sid has a current version.
 - **mise**: run `mise use <tool>@<version>`, then `mise lock --platform linux-x64,linux-arm64`. Add the command name to the copy loop of the `Dockerfile`. If the command name is not the tool name of `mise.toml`, add the two names to `test/manifests.sh`.
-- **Python**: write `python/<tool>.in` with `<tool>==<version>`. In `python/`, run `uv pip compile --universal --generate-hashes --python-version=3.14 <tool>.in --output-file=<tool>.txt`. Add the tool to the loop of the `python-tools` stage and its command to the links of the last stage.
+- **Python**: write `python/<tool>.in` with `<tool>==<version>`. In `python/`, run `uv pip compile --universal --generate-hashes --python-version=3.14 <tool>.in --output-file=<tool>.txt`. Add the tool to the loop of the `python-tools` stage and its command to the links of the last stage. Add `--lockfile requirements.txt:python/<tool>.txt` to the `osv-scanner` step of `.github/workflows/image.yml`.
 - **npm**: in `npm/`, run `npm install --package-lock-only --ignore-scripts <package>@<version>` with `HOME` set to an empty folder, so that your `~/.npmrc` cannot change the registry URLs of the lock file. Add the command to the links of the last stage.
 
 Then add `run <command> --version` to `test/tools.sh`.

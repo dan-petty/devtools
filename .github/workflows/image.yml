@@ -184,6 +184,7 @@ jobs:
           --lockfile requirements.txt:python/copier.txt
           --lockfile requirements.txt:python/pre-commit.txt
           --lockfile requirements.txt:python/semgrep.txt
+          --lockfile requirements.txt:python/ansible-lint.txt
 
       - name: Get the date for the Trivy cache key
         id: date

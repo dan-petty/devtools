@@ -91,6 +91,7 @@ run weaver --version
 run mise --version
 run uv --version
 run uvx --version
+run ansible-lint --version
 run copier --version
 run pre-commit --version
 # With no network, the version check of semgrep waits 98 s for its timeout.
