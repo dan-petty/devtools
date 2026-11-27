@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/dan-petty/devtools/compare/v1.3.1...v1.3.2) (2026-11-27)
+
+
+### Bug Fixes
+
+* **deps:** renew osv-scanner ignores until 2026-11-30 ([#105](https://github.com/dan-petty/devtools/issues/105)) ([cfb7748](https://github.com/dan-petty/devtools/commit/cfb7748b5f0747726890feaec7e055b28ca6c165))
+
 ## [1.3.1](https://github.com/dan-petty/devtools/compare/v1.3.0...v1.3.1) (2026-11-26)
 
 
