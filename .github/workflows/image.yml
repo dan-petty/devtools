@@ -543,6 +543,40 @@ jobs:
             exit 1
           fi
 
+      # The attestation pushes a second package version under the referrers fallback tag
+      # `sha256-<digest>`, and GHCR shows the newest version, so this copy gives that index the
+      # annotations of the manifest list. The dry run prints the new index and pushes nothing: the
+      # job stops before the push when the copy would drop a field of a descriptor, which would
+      # hide the attestation from `gh attestation verify --bundle-from-oci`, or the description.
+      - name: Annotate the attestation referrers index
+        timeout-minutes: 5
+        env:
+          DIGEST: ${{ steps.index.outputs.digest }}
+          ANNOTATIONS: ${{ steps.meta.outputs.annotations }}
+        run: |
+          tag="$IMAGE:sha256-${DIGEST#sha256:}"
+          docker buildx imagetools inspect --raw "$tag" > "$RUNNER_TEMP/referrers.json"
+          docker buildx imagetools inspect --raw "$IMAGE@$DIGEST" > "$RUNNER_TEMP/manifest-list.json"
+          mapfile -t annotations < <(sed -e '/^$/d' -e 's/^/--annotation=/' <<< "$ANNOTATIONS")
+          docker buildx imagetools create --dry-run "${annotations[@]}" --tag "$tag" "$tag" \
+            > "$RUNNER_TEMP/referrers-copy.json"
+          jq -S '.manifests' "$RUNNER_TEMP/referrers.json" > "$RUNNER_TEMP/referrers-before.json"
+          jq -S '.manifests' "$RUNNER_TEMP/referrers-copy.json" > "$RUNNER_TEMP/referrers-after.json"
+          if ! cmp -s "$RUNNER_TEMP/referrers-before.json" "$RUNNER_TEMP/referrers-after.json"; then
+            echo "::error::The copy of $tag would change a field of a descriptor, so the attestation would leave the registry"
+            diff -u "$RUNNER_TEMP/referrers-before.json" "$RUNNER_TEMP/referrers-after.json" | head -n 40 || true
+            exit 1
+          fi
+          description=$(jq -r '.annotations["org.opencontainers.image.description"] // ""' \
+            "$RUNNER_TEMP/manifest-list.json")
+          copied=$(jq -r '.annotations["org.opencontainers.image.description"] // ""' \
+            "$RUNNER_TEMP/referrers-copy.json")
+          if [ "$copied" != "$description" ]; then
+            echo "::error::The copy of $tag would have the description '${copied}', not '${description}'"
+            exit 1
+          fi
+          docker buildx imagetools create "${annotations[@]}" --tag "$tag" "$tag"
+
       - name: Show the manifest list
         timeout-minutes: 5
         env:

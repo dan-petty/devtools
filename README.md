@@ -159,8 +159,17 @@ Then the publish job:
 2. Makes one manifest list of the two digests with `docker buildx imagetools create`, and tags it `X.Y.Z`.
 3. Attests the build provenance of the manifest list.
 4. Moves `X.Y`, `X` and `latest` to the attested manifest list, and stops if a tag gets a different digest.
+5. Copies the referrers index `sha256-<digest>` that the attestation pushed, with `docker buildx imagetools create --annotation` and the annotations of the manifest list, so that both package versions carry the description. A dry run comes first: the job stops before the push when the copy would change a field of a descriptor of the referrers index or would not carry the description.
 
-The manifest list has the OCI annotations of `docker/metadata-action`, such as `org.opencontainers.image.description`, `source` and `licenses`. GHCR shows the description of a multi-arch image from these annotations.
+The manifest list has the OCI annotations of `docker/metadata-action`, such as `org.opencontainers.image.description`, `source` and `licenses`. The package page of `ghcr.io/dan-petty/devtools` shows the newest package version as Latest, with its description. `actions/attest` with `push-to-registry` pushes the referrers index `sha256-<digest>` of the attestation after the manifest list, so that index is the newest version, and step 5 copies it with the annotations of the manifest list. The page still marks the referrers index as Latest, so its install command names the `sha256-` tag: pull `latest` or a version tag.
+
+After a publish on `main`, check that the copy kept the attestation in the registry and that the page shows the description:
+
+```sh
+gh attestation verify oci://ghcr.io/dan-petty/devtools:latest --owner dan-petty --bundle-from-oci
+```
+
+The command exits 0, which proves that the attestation in the registry still reads after the copy, and the package page shows the description.
 
 The gate is on the lock files: osv-scanner fails the job on a finding in the npm and Python locks. The Trivy scan of the image is report-only (owner decision of 2026-11-19 in #1), because the Go binaries of upstream tools at their newest release hold HIGH and CRITICAL findings that no change here can fix. The daily rebuild and the Renovate updates close the alerts in code scanning. Trivy finds no OS package findings on Debian sid, because sid has no security tracker data. The owner approved this gap on 2026-11-19.
 
