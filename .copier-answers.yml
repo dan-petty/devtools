@@ -1,8 +1,15 @@
 # Copier writes this file. Change an answer with `copier update --data <question>=<answer>`, not here.
-_commit: v0.24.1
+_commit: v0.25.3
 _src_path: https://github.com/dan-petty/infra.git
 code_coverage: false
 code_owner: '@dan-petty'
 release_flow: true
 release_type: simple
-scopes: ''
+required_checks: ''
+scope_descriptions:
+    ci: 'GitHub Actions workflows: build, scan, push and publish'
+    deps: 'Tool versions: mise.toml, mise.lock, the npm and uv locks, and Renovate'
+    image: The Dockerfile, the image layers and the tool test
+    infra: Base images of the Dockerfile that Renovate updates
+    security: Scanner findings, ignore entries and the security policy of the image
+scopes: image,infra,security
