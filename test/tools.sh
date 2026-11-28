@@ -80,6 +80,7 @@ run osv-scanner --version
 run pluto version
 run popeye version
 run promtool --version
+run pv-migrate --version
 run tflint --version
 run tofu --version
 run trivy --version

@@ -155,6 +155,23 @@ url = "https://github.com/open-telemetry/weaver/releases/download/v0.28.0/weaver
 url_api = "https://api.github.com/repos/open-telemetry/weaver/releases/assets/641116864"
 provenance = "github-attestations"
 
+[[tools."github:utkuozdemir/pv-migrate"]]
+version = "3.8.0"
+backend = "github:utkuozdemir/pv-migrate"
+specifiers = ["3.8.0"]
+
+[tools."github:utkuozdemir/pv-migrate"."platforms.linux-arm64"]
+checksum = "sha256:6163e57c0035d80e652bd3552ff621cbbb7f0ddd62715346714d561cbe2e4d6f"
+url = "https://github.com/utkuozdemir/pv-migrate/releases/download/v3.8.0/pv-migrate_v3.8.0_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/utkuozdemir/pv-migrate/releases/assets/752319572"
+provenance = "github-attestations"
+
+[tools."github:utkuozdemir/pv-migrate"."platforms.linux-x64"]
+checksum = "sha256:8bb14641fc4d7e0b0d6f555d106a3c639ba05ed7f0df95502a879f225a9f364b"
+url = "https://github.com/utkuozdemir/pv-migrate/releases/download/v3.8.0/pv-migrate_v3.8.0_linux_x86_64.tar.gz"
+url_api = "https://api.github.com/repos/utkuozdemir/pv-migrate/releases/assets/752319496"
+provenance = "github-attestations"
+
 [[tools.gitleaks]]
 version = "8.30.1"
 backend = "aqua:gitleaks/gitleaks"
