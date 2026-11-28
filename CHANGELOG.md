@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.1](https://github.com/dan-petty/devtools/compare/v1.5.0...v1.5.1) (2026-11-28)
+
+
+### Bug Fixes
+
+* **deps:** lock file maintenance ([#121](https://github.com/dan-petty/devtools/issues/121)) ([2027e85](https://github.com/dan-petty/devtools/commit/2027e8513314689939cb715c7776c4c07ad9af23))
+* **deps:** Refresh pip-compile outputs ([#122](https://github.com/dan-petty/devtools/issues/122)) ([20f5936](https://github.com/dan-petty/devtools/commit/20f5936d36a39a15b1b7537da92c732d991cffe5))
+
 ## [1.5.0](https://github.com/dan-petty/devtools/compare/v1.4.0...v1.5.0) (2026-11-28)
 
 
