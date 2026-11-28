@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/dan-petty/devtools/compare/v1.4.0...v1.5.0) (2026-11-28)
+
+
+### Features
+
+* **image:** add pv-migrate ([#119](https://github.com/dan-petty/devtools/issues/119)) ([6e0582e](https://github.com/dan-petty/devtools/commit/6e0582e43b21f82b5ce4060f378b7a1421eba796)), closes [#118](https://github.com/dan-petty/devtools/issues/118)
+
 ## [1.4.0](https://github.com/dan-petty/devtools/compare/v1.3.4...v1.4.0) (2026-11-27)
 
 
